@@ -1,0 +1,68 @@
+   This is the IPC::Locker Perl Package.
+
+Copyright
+=========
+
+   This package is Copyright 1999-2003 by Wilson Snyder
+<wsnyder@wsnyder.org>.
+
+   You may distribute under the terms of either the GNU General Public
+License or the Perl Artistic License, as specified in the Perl README
+file.
+
+   This code is provided with no warranty of any kind, and is used
+entirely at your own risk.
+
+Description
+===========
+
+   This package provides a server for locks and a package for clients
+to access that server.  The result is that clients can access named
+locks on a Internet wide bases, solving critical section problems
+without the mess of NFS or other file locking techniques.
+
+   For example:
+
+       my $lock = IPC::Locker->lock(host=>'example.std.com');
+       ... Critical section ...
+       $lock->unlock();
+
+   See `man IPC::Locker' after installation.
+
+Obtaining Distribution
+======================
+
+   The latest version is available at `http://www.perl.org/CPAN/'
+
+   Download the latest package from that site, and decompress.  `gunzip
+IPC::Locker_version.tar.gz ; tar xvf IPC::Locker_version.tar'
+
+Supported Systems
+=================
+
+   This version of IPC::Locker has been built and tested on:
+
+   * i386-linux
+
+   * sparc-sun-solaris2.7
+
+   It should run on any system with perl and TCP/IP socketing.
+
+Installation
+============
+
+  1. `cd' to the directory containing this README notice.
+
+  2. Type `perl Makefile.PL' to configure IPC::Locker for your system.
+
+  3. Type `make' to compile IPC::Locker.
+
+  4. Type `make test' to check the compilation.
+
+  5. Type `make install' to install the programs and any data files and
+     documentation.
+
+  6. You may wish to install `lockerd' in a init.rc file so that it is
+     run at system startup.  An example for Linux is in init.d/lockerd.
+
+
