@@ -1,7 +1,7 @@
 COPYING
 MANIFEST
 Makefile.PL
-NEWS
+Changes
 README
 init.d/lockerd
 init.d/pidstatd

@@ -1,23 +1,24 @@
-IPC::Locker NEWS --  history of user-visible changes.
-See the end for copying conditions.
+Revision history for Perl extension IPC::Locker
 
-The contributors that suggested a given feature is shown in [].
-	
-This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
-
-* Changes in IPC::Locker 1.433 12/1/2004
+The contributors that suggested a given feature are shown in [].
+
+* IPC::Locker **********
+
+**	NEWS is now renamed Changes, to support CPAN indexing. [Offer Kaye]
+
+* IPC::Locker 1.433 12/1/2004
 
 ***	Fix filename conflict on Windows
-
-* Changes in IPC::Locker 1.431 9/13/2004
+
+* IPC::Locker 1.431 9/13/2004
 
 ***	Disassociate pidstatd from stdout so runs better as deamon.
-
-* Changes in IPC::Locker 1.430 1/27/2004
+
+* IPC::Locker 1.430 1/27/2004
 
 ****	Warn about non-root pidstatd initialization.
-
-* Changes in IPC::Locker 1.420 7/24/2003
+
+* IPC::Locker 1.420 7/24/2003
 
 **	Added pidstat tool for querying the daemon. [by Stephen Adkins]
 
@@ -25,18 +26,15 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 ***	Added pid=># parameter for setting PID to track. [Stephen Adkins]
 
-
-* Changes in IPC::Locker 1.410 1/31/2003
+* IPC::Locker 1.410 1/31/2003
 
 ***	Added lock_list() method.  [by Anton Berezin]
 
-
-* Changes in IPC::Locker 1.401 8/22/2002
+* IPC::Locker 1.401 8/22/2002
 
 ****	Fix tests to start the servers automatically.
 
-
-* Changes in IPC::Locker 1.400 8/1/2002
+* IPC::Locker 1.400 8/1/2002
 
 **	Added pidstatd deamon and pidwatch program.
 	Optional.  If running, allows for autounlocking across any hosts,
@@ -47,8 +45,7 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 ***	Added example init.d/lockerd file.
 
-
-* Changes in IPC::Locker 1.300 04/03/2002
+* IPC::Locker 1.300 04/03/2002
 
 **	Added autounlock switch to locks.  This records the host
 	and pid which obtained the lock, and if that PID disappears
@@ -58,43 +55,38 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 ***	Allow colon seperated hostnames for fallback hosting.
 
-
-* Changes in IPC::Locker 1.200 11/15/2001
+* IPC::Locker 1.200 11/15/2001
 
 **	Allow multiple lock names on lock requests,
 	and return the first one which becomes free. [Mike Lopresti]
 
 **	A zero timeout will disable timeouts.  [James FitzGibbon]
 
-
-* Changes in IPC::Locker 1.14 2/13/2000
+* IPC::Locker 1.14 2/13/2000
 
 **	Changed default port to 'lockerd' which will look up the port
 	number in /etc/services.  If not found defaults to old 1751.
 
 ***	Improved detection and recovery of daemon failures.
 
-
-* Changes in IPC::Locker 1.12 5/24/2000
+* IPC::Locker 1.12 5/24/2000
 
 **	Added support for Unix named sockets
 	[Written by kaspar@lifosa.com]
 
 ***	Fixed bug where lock expiration timer would fire at wrong time
-
 
 ----------------------------------------------------------------------
 $Id$
 ----------------------------------------------------------------------
-Copyright information:
 
-   Copyright 1999-2003 by Wilson Snyder.  This program is free software;
-   you can redistribute it and/or modify it under the terms of either the GNU
-   General Public License or the Perl Artistic License.
+This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
-   See the README file included with this file for licencing information.
+Copyright 1999-2004 by Wilson Snyder.  This program is free software;
+you can redistribute it and/or modify it under the terms of either the GNU
+General Public License or the Perl Artistic License.
 
 Local variables:
 mode: outline
-paragraph-separate: "[ 	]*$"
+paragraph-separate: "[ 	\f\n]*$"
 end:
