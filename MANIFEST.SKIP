@@ -1,0 +1,12 @@
+^CVS/
+/CVS/
+.cvsignore$
+pm_to_blib$
+,v$
+\.(bak|old)$
+\bMakefile$
+^MANIFEST.SKIP$
+\.wpsin$
+\.tar\.
+\bblib\b
+
