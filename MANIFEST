@@ -1,0 +1,21 @@
+COPYING
+MANIFEST
+Makefile.PL
+NEWS
+README
+init.d/lockerd
+init.d/pidstatd
+lib/IPC/Locker.pm
+lib/IPC/Locker/Server.pm
+lib/IPC/PidStat.pm
+lib/IPC/PidStat/PidServer.pm
+lockerd
+pidstat
+pidstatd
+pidwatch
+readme.texi
+t/00_pod.t
+t/20_pidstat.t
+t/40_locker.t
+t/test_utils.pl
+META.yml                                 Module meta-data (added by MakeMaker)
