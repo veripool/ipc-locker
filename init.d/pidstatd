@@ -14,19 +14,17 @@
 state=$1
 prog=/usr/local/bin/pidstatd
 
-# Source site start file
-if [ -x /import/nauticus/common/etc/profile.d/site.sh ] ; then
-    . /import/nauticus/common/etc/profile.d/site.sh
-fi
-
 case $state in
   start)
-        echo starting $prog if present
 	if [ $EUID != 0 ]; then
 	    echo "Run as root, only root can do kill 0's"  
 	    exit 10
 	fi
-        [ -f $prog ] && $prog &
+	if [ -f $prog ] ; then
+            echo starting $prog
+	    $prog &
+	fi
+	exit 0
         ;;
   stop)
         if test "x`pidof -o $$ -o $PPID -x pidstatd`" != x; then

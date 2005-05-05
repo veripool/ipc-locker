@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl -w
+#!/usr/bin/perl -w
 # $Revision$$Date$$Author$
 # DESCRIPTION: Perl ExtUtils: Common routines required by package tests
 #

@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl -w
+#!/usr/bin/perl -w
 # $Revision$$Date$$Author$
 # DESCRIPTION: Perl ExtUtils: Type 'make test' to test this package
 #

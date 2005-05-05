@@ -14,15 +14,12 @@
 state=$1
 prog=/usr/local/bin/lockerd
 
-# Source site start file
-if [ -x /import/nauticus/common/etc/profile.d/site.sh ] ; then
-    . /import/nauticus/common/etc/profile.d/site.sh
-fi
-
 case $state in
   start)
-        echo starting $prog if present
-        [ -f $prog ] && su daemon -c $prog &
+ 	if [ -f $prog ] ; then
+	    echo starting $prog
+	    su daemon -c $prog &
+	fi
         ;;
   stop)
         if test "x`pidof -o $$ -o $PPID -x lockerd`" != x; then

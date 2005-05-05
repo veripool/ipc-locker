@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl -Tw
+#!/usr/bin/perl -w
 # lockerd - distributed lock handler for perl IPC::Locker
 # $Id$
 # Wilson Snyder <wsnyder@wsnyder.org>
@@ -31,6 +31,8 @@ BEGIN { $ENV{PATH} = '/usr/ucb:/bin' }	# Secure path
 # globals
 
 use vars qw($Pid);
+
+$0 = 'lockerd';   # So ps and pidof can find this daemon
 
 ######################################################################
 # main

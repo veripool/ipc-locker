@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl -Tw
+#!/usr/bin/perl -w
 # pidstatd - distributed lock handler for perl IPC::Locker
 # $Id$
 # Wilson Snyder <wsnyder@wsnyder.org>
@@ -26,6 +26,8 @@ BEGIN { $ENV{PATH} = '/usr/ucb:/bin' }	# Secure path
 
 ######################################################################
 # configuration
+
+$0 = 'pidstatd';   # So ps and pidof can find this daemon
 
 ######################################################################
 # globals
