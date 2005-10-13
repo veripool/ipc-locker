@@ -2,9 +2,11 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
-* IPC::Locker **********
+* IPC::Locker 1.434 10/13/2005
 
 **	NEWS is now renamed Changes, to support CPAN indexing. [Offer Kaye]
+
+****	Fixed initalization scripts.
 
 * IPC::Locker 1.433 12/1/2004
 
