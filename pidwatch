@@ -2,15 +2,15 @@
 #$Revision$$Date$$Author$
 ######################################################################
 #
-# Copyright 2002-2003 by Wilson Snyder.  This program is free software;
+# Copyright 2002-2006 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 ######################################################################
 
 require 5.006_001;
@@ -35,7 +35,9 @@ our $Opt_Killer;
 #======================================================================
 # main
 
-$SIG{CHLD} = 'IGNORE';
+# Beware, POSIX execve() et al. have an unspecified effect on the action
+# for SIGCHLD (alone).  So this won't work.
+## $SIG{CHLD} = 'IGNORE';
 
 my $opt_cd;
 my %server_params = ();
@@ -67,8 +69,6 @@ if ($opt_cd && -d $opt_cd) {
     chdir ($opt_cd);
 }
 
-my $exister = new IPC::PidStat (%server_params);
-
 # Debugging
 my $dbgfh = \&STDERR;
 #$dbgfh = IO::File->new("$ENV{HOME}/pidwatch_$$","w") if $Debug;
@@ -76,24 +76,39 @@ print $dbgfh "\tArgs: @Orig_Argv\n" if $Debug;
 
 # Fork once to start parent process
 my $foreground_pid = $$;  # Unlike most forks, the job goes in the parent
+
 if (my $pid = fork()) {  # Parent process, foreground job
     print $dbgfh "\tForeground: @Opt_FgArgv\n" if $Debug;
+    # The child forks again quickly.  Sometimes, SIG_CHLD leaks to us and
+    # wrecks the exec'd command, so wait for it now.
+    my $rv = waitpid($pid, 0);
+    if ($rv != $pid) {
+	die "%Error: waitpid() returned $rv: $!";
+    } elsif ($?) {
+	die "%Error: Child died with status $?,";
+    }
+
     exec ("/bin/sh", "-c", join(' ',@Opt_FgArgv));
     die "%Error: Exec failed: @Opt_FgArgv,";
 }
 #else, rest is for child process.
 
+# Do this while we still have STDERR.
+my $exister = new IPC::PidStat (%server_params)
+    or die "%Error: Did not connect to pidstatd,";
+
 # Disassociate from controlling terminal
-POSIX::setsid();
-open(STDIN,  "+>/dev/null");
+POSIX::setsid()	or die "%Error: Can't start a new session: $!";
+
+# Change working directory
+chdir "/";
+open(STDIN,  "+>/dev/null") or die "%Error: Can't re-open STDIN: $!";
 if (!$Debug) {
     open(STDOUT, "+>&STDIN");
     open(STDERR, "+>&STDIN");
 }
 # Prevent possibility of acquiring a controling terminal
-exit if fork();
-# Change working directory
-chdir "/";
+exit(0) if fork();
 
 while (1) {
     if (IPC::PidStat::local_pid_doesnt_exist($foreground_pid)) {
@@ -108,6 +123,10 @@ while (1) {
 	@recved = $exister->recv_stat();
 	alarm(0);
     };
+    if ($@) {
+	alarm(0);
+	# Recovery of PidStat protocol must be handled in that class.
+    }
     if ($recved[0]
 	&& $recved[0]==$Opt_Pid
 	&& $recved[1]==0) {   # It doesn't exist.  Oh my.
@@ -219,7 +238,7 @@ Signal number/name to send to process on remote PIDs death.  Defaults to
 
 The latest version is available from CPAN and from L<http://www.veripool.com/>.
 
-Copyright 2002-2004 by Wilson Snyder.  This package is free software; you
+Copyright 2002-2006 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License or the Perl Artistic License.
 
