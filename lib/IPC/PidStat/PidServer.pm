@@ -76,6 +76,10 @@ sub start_server {
 		my $out_msg = "EXIS $pid $exists $Hostname";  # PID response
 		print "   Send msg $out_msg\n" if $Debug;
 		$server->send($out_msg);  # or die... But we'll ignore errors
+	    } else {
+		my $out_msg = "UNKN $pid na $Hostname";  # PID response
+		print "   Send msg $out_msg\n" if $Debug;
+		$server->send($out_msg);  # or die... But we'll ignore errors
 	    }
 	}
     }

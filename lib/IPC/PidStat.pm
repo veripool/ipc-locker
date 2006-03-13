@@ -95,6 +95,8 @@ sub recv_stat {
 	my $pid=$1;  my $exists = $2;  my $hostname = $3;
 	print "   Pid $pid Exists on $hostname? $exists\n" if $Debug;
 	return ($pid, $exists, $hostname);
+    } elsif ($in_msg =~ /^UNKN (\d+) (\s+) (\S+)/) {  # PID not determinate
+	return undef;
     }
     return undef;
 }
@@ -109,6 +111,7 @@ sub pid_request_recv {
 	    local $SIG{ALRM} = sub { die "Timeout\n"; };
 	    alarm(1);
 	    @recved = $self->recv_stat();
+	    alarm(0);
 	};
 	return @recved if defined $recved[0];
     }
@@ -127,7 +130,7 @@ sub ping_status {
     # Return OK and status message, for nagios like checks
     my $start_time = [gettimeofday()];
     my ($epid, $eexists, $ehostname) = eval {
-	$self->pid_request_recv(%params);
+	return $self->pid_request_recv(%params);
     };
     my $elapsed = tv_interval ( $start_time, [gettimeofday]);
 

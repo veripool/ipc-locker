@@ -41,8 +41,9 @@ if (! GetOptions (
 		  "h|help"	=> \&print_usage,
 		  "v|debug"	=> \&debug,
 		  "V|version"	=> \&version,
-		  "p|port=i"	=> sub {$opt_req_params{port}   = $_[1];},
 		  "H|host|hostname=s"	=> sub {$opt_req_params{host}   = $_[1];},
+		  "pid=i"	=> sub {$opt_req_params{pid}   = $_[1];},
+		  "p|port=i"	=> sub {$opt_req_params{port}   = $_[1];},
 		  )) {
     usage("Bad options passed, use --help for more information.\n");
 }
@@ -79,7 +80,7 @@ sub check_pidstatd {
     my $exister = new IPC::PidStat (%params);
 
     # Send a request to the server, get reply & trap errors
-    my $res = $exister->ping_status();
+    my $res = $exister->ping_status(%params);
     if ($res && $res->{ok}) {
 	print "OK - $res->{status}\n";
 	exit $ERRORS{OK};

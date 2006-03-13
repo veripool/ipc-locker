@@ -13,7 +13,7 @@ use Test;
 use strict;
 use vars qw (%SLArgs $Serv_Pid);
 
-BEGIN { plan tests => 9 }
+BEGIN { plan tests => 13 }
 BEGIN { require "t/test_utils.pl"; }
 
 END { kill 'TERM', $Serv_Pid; }
@@ -54,7 +54,7 @@ my $exister = new IPC::PidStat
 ok ($exister);
 
 # Send request and check return
-ok (check_stat($exister,12345));
+ok (check_stat($exister,1234));
 
 ok (check_stat($exister,66666));
 
@@ -63,6 +63,39 @@ ok (check_stat($exister,$$));
 # Destructor
 undef $exister;
 ok (1);
+
+#########################
+# pidwatch
+
+# We use init's pid (1), which had better be running :)
+{   print "pidwatch ok:\n";
+    my $rtn = `$PERL ./pidwatch --port $SLArgs{port} --pid 1 echo hello`;
+    chomp $rtn;
+    print "returns: $rtn\n";
+    ok(1);
+    ok($rtn eq "hello");
+}
+
+{   print "pidwatch fail:\n";
+    my $nonexist_pid = 999999;  # not even legal
+    my $rtn = `$PERL ./pidwatch --port $SLArgs{port} --pid $nonexist_pid echo never_executed`;
+    chomp $rtn;
+    print "returns: $rtn\n";
+    ok($rtn eq "");
+}
+
+#########################
+# Nagios script check
+
+{   print "check_pidstat:\n";
+    # Note we may not be running as root, so need to check $$, not init.
+    my $rtn = `$PERL nagios/check_pidstatd --port $SLArgs{port} --pid $$`;
+    chomp $rtn;
+    print "return: $rtn\n";
+    ok($rtn =~ /OK/);
+}
+
+######################################################################
 
 sub check_stat {
     my $exister = shift;

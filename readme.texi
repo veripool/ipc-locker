@@ -40,7 +40,9 @@ that server.  The result is that clients can access named locks on a Internet
 wide bases, solving critical section problems without the mess of NFS or other
 file locking techniques.
 
-For example:
+@subsection IPC::Locker
+
+IPC::Locker is a Perl package which allows cross cluster locking.  For example:
 
 @example
   my $lock = IPC::Locker->lock(host=>'example.std.com');
@@ -49,6 +51,37 @@ For example:
 @end example
 
 See @samp{man IPC::Locker} after installation.
+
+@subsection lockerd
+
+lockerd is the daemon that supports IPC::Locker. See @samp{man
+lockerd} after installation.
+
+@subsection IPC::PidStat
+
+IPC::PidStat is a Perl package which answers the question, ``is pid X
+running on host Y?''.  See @samp{man IPC::PidStat} after installation.
+
+@subsection pidstat
+
+pidstat is a program which answers the question, ``is pid X
+running on host Y?''.  See @samp{man pidstat} after installation.
+
+@subsection pidstatd
+
+pidstat is the daemon that supports IPC::PidStat and pidstat. See
+@samp{man pidstatd} after installation.
+
+@subsection pidwatch
+
+pidwatch is a program which starts other programs, and kill that program
+when another job exists.  @samp{man pidwatch} after installation.
+
+@subsection check_lockerd and check_pidstatd
+
+check_lockerd and check_pidstatd are Nagios plugins to check lockerd
+and pidstatd.  See the Nagios documentation
+@uref{http://www.nagios.org} for information on installing plugins.
 
 @node Obtaining Distribution, Supported Systems, Description, Top
 @section Obtaining Distribution
