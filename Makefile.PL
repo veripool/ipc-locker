@@ -19,7 +19,8 @@ install::
 	\@echo
 	\@echo -NOTE: You may want to 'cp init.d/lockerd  /etc/init.d'
 	\@echo -NOTE:                 'cp init.d/pidstatd /etc/init.d'
-	\@echo -NOTE: And setup appropriate links in /etc/rc.d/rc3.d
+	\@echo -NOTE: And setup appropriate links in /etc/rc.d/rc*.d,
+	\@echo -NOTE: and if using nagios, see files in nagios/*
 
 install-here::
 	make install
@@ -52,6 +53,8 @@ WriteMakefile(
 	      AUTHOR	=> 'Wilson Snyder <wsnyder@wsnyder.org>',
 	      ABSTRACT_FROM => 'lib/IPC/Locker.pm',
 	      VERSION_FROM => 'lib/IPC/Locker.pm',
+	      PREREQ_PM => {'Time::HiRes' => 0,
+			},
 	      NO_META	=> 1,
 	      EXE_FILES => [qw( lockerd pidstatd pidwatch )],
 	      'dist'    => {COMPRESS => 'gzip -9f',

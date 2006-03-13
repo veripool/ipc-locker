@@ -92,8 +92,15 @@ Type @samp{make install} to install the programs and any data files and
 documentation.
 
 @item
-You may wish to install @samp{lockerd} in a init.rc file so that it is run at
-system startup.  An example for Linux is in init.d/lockerd.
+You may wish to install @samp{lockerd} and @samp{pidstatd} in a
+init.rc file so that it is run at system startup.  Depending on your
+distribution, you may be able to just copy the examples in
+init.d/lockerd to /etc/init.d, and type @samp{chkconfig pidstatd on}
+and @samp{chkconfig lockerd on}.
+
+@item
+If you are using Nagios (@url{http://www.nagios.org}), sample scripts
+to check the daemons are included in the nagios subdirectory.
 
 @end enumerate
 

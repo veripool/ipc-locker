@@ -4,6 +4,8 @@ The contributors that suggested a given feature are shown in [].
 
 * IPC::Locker 1.440***
 
+***	Add Nagios example files.
+
 ***	Fix pidwatch dieing due to SIGCHILD race. [by Greg Waters]
 
 * IPC::Locker 1.434 10/13/2005

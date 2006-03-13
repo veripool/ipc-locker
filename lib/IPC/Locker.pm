@@ -65,6 +65,11 @@ is destroyed.
 
 Polls the server to see if it is up.  Returns true if up, otherwise undef.
 
+=item ping_status ()
+
+Polls the server to see if it is up.  Returns hash reference with {ok}
+indicating if up, and {status} with status information.
+
 =item break_lock ()
 
 Remove current locker for the given lock.
@@ -190,6 +195,7 @@ require Exporter;
 
 use Sys::Hostname;
 use Socket;
+use Time::HiRes qw(gettimeofday tv_interval);
 use IO::Socket;
 
 use IPC::PidStat;
@@ -268,6 +274,25 @@ sub ping {
     };
     return undef if !$ok;
     return ($self);
+}
+
+sub ping_status {
+    my $self = shift;
+    # Return OK and status message, for nagios like checks
+    $self = $self->new(@_) if (!ref($self));
+    my $ok = 0;
+    my $start_time = [gettimeofday()];
+    eval {
+	$self->_request("");
+	$ok = 1;
+    };
+    my $elapsed = tv_interval ( $start_time, [gettimeofday]);
+
+    if (!$ok) {
+	return ({ok=>undef,status=>"No response from lockerd on $self->{host}:$self->{port}"});
+    } else {
+	return ({ok=>1,status=>sprintf("%1.3f second response from lockerd on $self->{host}:$self->{port}", $elapsed)});
+    }
 }
 
 ######################################################################

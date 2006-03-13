@@ -19,6 +19,7 @@ require 5.004;
 
 use IPC::Locker;
 use Socket;
+use Time::HiRes qw(gettimeofday tv_interval);
 use IO::Socket;
 use Sys::Hostname;
 use POSIX;
@@ -58,7 +59,7 @@ sub open_socket {
     # Open the socket
     return if $self->{_socket_fh};
     $self->{_socket_fh} = IO::Socket::INET->new( Proto     => 'udp')
-	or die "$0: Error, socket: $!";
+	or die "$0: %Error, socket: $!";
 }
 
 sub fh {
@@ -77,7 +78,9 @@ sub pid_request {
     $self->open_socket();  #open if not already
 
     my $out_msg = "PIDR $params{pid}\n";
-    my $dest = sockaddr_in($self->{port}, inet_aton($params{host}));
+    my $ipnum = inet_aton($params{host})
+	or die "%Error: Can't find host $params{host}\n";
+    my $dest = sockaddr_in($self->{port}, $ipnum);
     $self->fh->send($out_msg,0,$dest);
 }
 
@@ -111,6 +114,29 @@ sub pid_request_recv {
     }
     return undef;
 }    
+
+######################################################################
+#### Status checking
+
+sub ping_status {
+    my $self = shift;
+    my %params = (pid => 1, 	# Init.
+		  host => $self->{host},
+		  @_,
+		  );
+    # Return OK and status message, for nagios like checks
+    my $start_time = [gettimeofday()];
+    my ($epid, $eexists, $ehostname) = eval {
+	$self->pid_request_recv(%params);
+    };
+    my $elapsed = tv_interval ( $start_time, [gettimeofday]);
+
+    if (!$eexists) {
+	return ({ok=>undef,status=>"No response from pidstatd on $self->{host}:$self->{port}"});
+    } else {
+	return ({ok=>1,status=>sprintf("%1.3f second response from pidstatd on $self->{host}:$self->{port}", $elapsed)});
+    }
+}
 
 ######################################################################
 #### Utilities
