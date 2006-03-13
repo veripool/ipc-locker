@@ -2,9 +2,9 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
-* IPC::Locker 1.440***
+* IPC::Locker 1.440 3/13/2006
 
-***	Add Nagios example files.
+***	Add Nagios plugins check_lockerd and check_pidstatd.
 
 ***	Fix pidwatch dieing due to SIGCHILD race. [by Greg Waters]
 
