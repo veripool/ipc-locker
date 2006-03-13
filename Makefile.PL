@@ -17,10 +17,11 @@ README: readme.texi
 
 install::
 	\@echo
-	\@echo -NOTE: You may want to 'cp init.d/lockerd  /etc/init.d'
-	\@echo -NOTE:                 'cp init.d/pidstatd /etc/init.d'
-	\@echo -NOTE: And setup appropriate links in /etc/rc.d/rc*.d,
-	\@echo -NOTE: and if using nagios, see files in nagios/*
+	\@echo '-NOTE: You may want to'
+	\@echo '-NOTE:      cp init.d/pidstatd init.d/lockerd  /etc/init.d'
+	\@echo '-NOTE: And setup appropriate links in /etc/rc.d/rc*.d,'
+	\@echo '-NOTE: and if using nagios,'
+	\@echo '-NOTE:      cp nagios/check_pidstatd nagios/check_lockerd  /usr/lib/nagios/plugins'
 
 install-here::
 	make install

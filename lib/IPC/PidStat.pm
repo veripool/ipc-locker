@@ -137,7 +137,7 @@ sub ping_status {
     if (!$eexists) {
 	return ({ok=>undef,status=>"No response from pidstatd on $self->{host}:$self->{port}"});
     } else {
-	return ({ok=>1,status=>sprintf("%1.3f second response from pidstatd on $self->{host}:$self->{port}", $elapsed)});
+	return ({ok=>1,status=>sprintf("%1.3f second response on $self->{host}:$self->{port}", $elapsed)});
     }
 }
 

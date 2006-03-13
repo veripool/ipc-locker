@@ -79,10 +79,10 @@ sub check_lockerd {
     # Send a request to the server, get reply & trap errors
     my $res = $locker->ping_status();
     if ($res && $res->{ok}) {
-	print "OK - $res->{status}\n";
+	print "LOCKERD OK - $res->{status}\n";
 	exit $ERRORS{OK};
     } else {
-	print "CRITICAL - $res->{status}\n";
+	print "LOCKERD CRITICAL - $res->{status}\n";
 	exit $ERRORS{CRITICAL};
     }
 }
@@ -104,12 +104,19 @@ check_lockerd - Under Nagios, check the lockerd daemon on the specified host.
 
 Check_lockerd is a nagios plugin for the IPC::Locker daemon.
 
+Add to Nagios's checkcommands.cfg:
+
+    define command{
+	command_name	check_lockerd
+	command_line	$USER1$/check_lockerd -H $HOSTADDRESS$
+	}
+
 A quicker, but less accurate check is possible using the default Nagios
 check_tcp plugin as follows:
 
-   define service{
-	service_description		lockerd
-	check_command			check_tcp!1751
+    define command{
+	command_name	check_lockerd
+	command_line	$USER1$/check_tcp -H $HOSTADDRESS$ -p 1751
 	}
 
 =head1 ARGUMENTS

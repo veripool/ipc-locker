@@ -291,7 +291,7 @@ sub ping_status {
     if (!$ok) {
 	return ({ok=>undef,status=>"No response from lockerd on $self->{host}:$self->{port}"});
     } else {
-	return ({ok=>1,status=>sprintf("%1.3f second response from lockerd on $self->{host}:$self->{port}", $elapsed)});
+	return ({ok=>1,status=>sprintf("%1.3f second response on $self->{host}:$self->{port}", $elapsed)});
     }
 }
 
