@@ -33,10 +33,18 @@ IPC::Locker - Distributed lock handler
 
 =head1 DESCRIPTION
 
-L<IPC::Locker> will query a remote server to obtain a lock.  This is
-useful for distributed utilities which run on many machines, and cannot use
-file locks or other such mechanisms due to NFS or lack of common file
-systems.
+L<IPC::Locker> will query a remote lockerd server to obtain a lock around a
+critical section.  When the critical section completes, the lock may be
+returned.
+
+This is useful for distributed utilities which run on many machines, and
+cannot use file locks or other such mechanisms due to NFS or lack of common
+file systems.
+
+Multiple locks may be requested, in which case the first lock to be free
+will be used.  Lock requests are serviced in a first-in-first-out order,
+and the locker can optionally free locks for any processes that cease to
+exist.
 
 =over 4
 
@@ -93,6 +101,13 @@ Boolean flag, true indicates wait for the lock when calling lock() and die
 if a error occurs.  False indicates to just return false.  Defaults to
 true.
 
+=item destroy_unlock
+
+Boolean flag, true indicates destruction of the lock variable should unlock
+the lock.  Set to false if another child process will maintain and close
+the lock, and other children destroying the lock variable should not unlock
+the lock.  Defaults to true.
+
 =item family
 
 The family of transport to use, either INET or UNIX.  Defaults to INET.
@@ -101,11 +116,13 @@ The family of transport to use, either INET or UNIX.  Defaults to INET.
 
 The name of the host containing the lock server.  It may also be a array
 of hostnames, where if the first one is down, subsequent ones will be tried.
+Defaults to value of IPCLOCKER_HOST or localhost.
 
 =item port
 
 The port number (INET) or name (UNIX) of the lock server.  Defaults to
-'lockerd' looked up via /etc/services, else 1751.
+IPCLOCKER_PORT environment variable, else 'lockerd' looked up via
+/etc/services, else 1751.
 
 =item lock
 
@@ -166,6 +183,21 @@ True to print messages when waiting for locks.  Defaults false.
 
 =back
 
+=head1 ENVIRONMENT
+
+=over 4
+
+=item IPCLOCKER_HOST
+
+Hostname of L<lockerd> server.  Defaults to localhost.
+
+=item IPCLOCKER_PORT
+
+The port number (INET) or name (UNIX) of the lock server.  Defaults to
+'lockerd' looked up via /etc/services, else 1751.
+
+=back
+
 =head1 DISTRIBUTION
 
 The latest version is available from CPAN and from L<http://www.veripool.com/>.
@@ -214,8 +246,8 @@ $VERSION = '1.440';
 ######################################################################
 #### Useful Globals
 
-$Default_Port = 'lockerd';	# Number (1751) or name to lookup in /etc/services
-$Default_Port = 1751 if !getservbyname ($Default_Port,"");
+$Default_Port = ($ENV{IPCLOCKER_PORT}||'lockerd');	# Number (1751) or name to lookup in /etc/services
+$Default_Port = 1751 if ($Default_Port !~ /^\d+$/ && !getservbyname ($Default_Port,""));
 $Default_PidStat_Port = 'pidstatd';	# Number (1752) or name to lookup in /etc/services
 $Default_PidStat_Port = 1752 if !getservbyname ($Default_PidStat_Port,"");
 $Default_Family = 'INET';
@@ -231,13 +263,15 @@ sub new {
     my $hostname = hostname() || "localhost";
     my $self = {
 	#Documented
-	host=>'localhost', port=>$Default_Port,
+	host=>($ENV{IPCLOCKER_HOST}||'localhost'),
+	port=>$Default_Port,
 	lock=>['lock'],
 	timeout=>60*10, block=>1,
 	pid=>$$,
 	#user=>		# below
 	hostname=>$hostname,
 	autounlock=>0,
+	destroy_unlock=>1,
 	verbose=>$Debug,
 	print_broke=>sub {my $self=shift; print "Broke lock from $_[0] at ".(scalar(localtime))."\n" if $self->{verbose};},
 	print_obtained=>sub {my $self=shift; print "Obtained lock at ".(scalar(localtime))."\n" if $self->{verbose};},
@@ -312,7 +346,9 @@ sub lock {
 
 sub DESTROY () {
     my $self = shift; ($self && ref($self)) or croak 'usage: $self->DESTROY()';
-    $self->unlock();
+    if ($self->{destroy_unlock}) {
+	$self->unlock();
+    }
 }
 
 sub unlock {
@@ -467,6 +503,17 @@ sub _request {
 sub _array_or_one {
     return [$_[0]] if !ref $_[0];
     return $_[0];
+}
+
+sub colon_joined_list {
+    my $item = shift;
+    return $item if !ref $item;
+    return (join ":",@{$item});
+}
+
+sub lock_name_list {
+    my $self = shift;
+    return colon_joined_list($self->{lock});
 }
 
 ######################################################################

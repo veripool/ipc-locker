@@ -7,6 +7,7 @@ lib/IPC/Locker/Server.pm
 lib/IPC/PidStat.pm
 lib/IPC/PidStat/PidServer.pm
 lockerd
+lockersh
 Makefile.PL
 MANIFEST
 META.yml			Module meta-data (added by MakeMaker)
@@ -20,4 +21,5 @@ readme.texi
 t/00_pod.t
 t/20_pidstat.t
 t/40_locker.t
+t/45_lockersh.t
 t/test_utils.pl

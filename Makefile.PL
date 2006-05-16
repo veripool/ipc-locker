@@ -57,7 +57,7 @@ WriteMakefile(
 	      PREREQ_PM => {'Time::HiRes' => 0,
 			},
 	      NO_META	=> 1,
-	      EXE_FILES => [qw( lockerd pidstatd pidwatch )],
+	      EXE_FILES => [qw( lockerd lockersh pidstatd pidwatch )],
 	      'dist'    => {COMPRESS => 'gzip -9f',
 			    SUFFIX   => '.gz', 
 			    DIST_DEFAULT => 'README all tardist',

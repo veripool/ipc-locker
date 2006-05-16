@@ -2,6 +2,12 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
+* IPC::Locker 1.44**
+
+**	Created lockersh program.
+
+***	Add IPCLOCKER_HOST and IPCLOCKER_PORT environment variables.
+
 * IPC::Locker 1.440 3/13/2006
 
 ***	Add Nagios plugins check_lockerd and check_pidstatd.
@@ -86,6 +92,7 @@ The contributors that suggested a given feature are shown in [].
 
 ----------------------------------------------------------------------
 $Id$
+DESCRIPTION: Documentation on change history for this package
 ----------------------------------------------------------------------
 
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
