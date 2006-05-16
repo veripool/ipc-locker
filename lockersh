@@ -28,6 +28,7 @@ use IPC::PidStat;
 
 our @Orig_Argv = @ARGV;
 our @Opt_FgArgv;
+our $Opt_Locklist;
 
 #======================================================================
 # main
@@ -44,16 +45,28 @@ if (! GetOptions (
 		  "help"	=> \&usage,
 		  "debug"	=> \&debug,
 		  "dhost=s"	=> sub {shift; $server_params{host} = shift;},
+		  "lock=s"	=> sub {shift; push @{$server_params{lock}}, split(':',shift);},
 		  "port=i"	=> sub {shift; $server_params{port} = shift;},
 		  "timeout=i"	=> sub {shift; $server_params{timeout} = shift;},
 		  "verbose!"	=> sub {shift; $server_params{verbose} = shift;},
-		  "lock=s"	=> sub {shift; push @{$server_params{lock}}, split(':',shift);},
+		  "locklist!"	=> \$Opt_Locklist,
 		  #
 		  "<>"		=> \&parameter,
 		  )) {
     usage();
 }
 push @Opt_FgArgv, @ARGV;
+
+if ($Opt_Locklist) {
+    my $lock  = new IPC::Locker (verbose=>0,
+				 timeout=>0,
+				 autounlock=>1,
+				 destroy_unlock=>0,
+				 %server_params,
+				 );
+    locklist($lock);
+    exit(0);
+}
 
 $#{$server_params{lock}}>=0 or die "%Error: --lock not specified\n";
 $Opt_FgArgv[0] or die "%Error: No command specified\n";
@@ -132,6 +145,16 @@ sub parameter {
 }
  
 #######################################################################
+
+sub locklist {
+    my $lock = shift;
+    my %list = ($lock->lock_list);
+    foreach my $lockname (sort keys %list) {
+	printf ("%-20s %s\n",$lockname, $list{$lockname});
+    }
+}
+
+#######################################################################
 __END__
 
 =pod
@@ -174,6 +197,11 @@ Displays this message and program version and exits.
 
 Name for the lock.  This argument may be passed multiple times or with a
 colon separator to allow one of multiple possible locks to be selected.
+
+=item --locklist
+
+Suppress normal operation, and instead print a list of all outstanding
+locks and their owners.
 
 =item --port I<port>
 

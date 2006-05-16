@@ -78,7 +78,7 @@ ok (1);
 
 {   print "pidwatch fail:\n";
     my $nonexist_pid = 999999;  # not even legal
-    my $rtn = `$PERL ./pidwatch --port $SLArgs{port} --pid $nonexist_pid echo never_executed`;
+    my $rtn = `$PERL ./pidwatch --port $SLArgs{port} --pid $nonexist_pid "sleep 1 ; echo never_executed"`;
     chomp $rtn;
     print "returns: $rtn\n";
     ok($rtn eq "");

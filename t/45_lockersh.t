@@ -13,7 +13,7 @@ use Test;
 use strict;
 use vars qw (%SLArgs $Serv_Pid);
 
-BEGIN { plan tests => 2 }
+BEGIN { plan tests => 3 }
 BEGIN { require "t/test_utils.pl"; }
 
 END { kill 'TERM', $Serv_Pid; }
@@ -40,5 +40,10 @@ sleep(1); #Let server get established
     chomp $rtn;
     print "returns: $rtn\n";
     ok($rtn eq "OK");
+}
+
+{   print "lockersh --locklist:\n";
+    my $rtn = `$PERL ./lockersh --dhost localhost --port $SLArgs{port} --locklist`;
+    ok(1);
 }
 
