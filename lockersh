@@ -186,7 +186,7 @@ a clump:
 
 =item --dhost I<host>
 
-Hostname of L<lockerd> server.  Defaults to IPCLOCKER_HOST enviornment
+Hostname of L<lockerd> server.  Defaults to IPCLOCKER_HOST environment
 variable.
 
 =item --help
