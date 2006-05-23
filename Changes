@@ -2,11 +2,11 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
-* IPC::Locker 1.45**
+* IPC::Locker 1.451 5/23/2006
 
 ****	Cache IP addresses to avoid name server traffic. [by Greg Waters]
 
-* IPC::Locker 1.450 5/16/2006 (Alpha release only)
+* IPC::Locker 1.450 (Alpha release only)
 
 **	Created lockersh program for adding locks around other programs.
 
