@@ -4,9 +4,9 @@ The contributors that suggested a given feature are shown in [].
 
 * IPC::Locker 1.45**
 
-***	All program arguments to pidwatch are now single quoted '' to the shell.
+****	Cache IP addresses to avoid name server traffic. [by Greg Waters]
 
-* IPC::Locker 1.450 5/16/2006
+* IPC::Locker 1.450 5/16/2006 (Alpha release only)
 
 **	Created lockersh program for adding locks around other programs.
 

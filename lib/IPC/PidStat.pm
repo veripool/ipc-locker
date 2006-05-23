@@ -6,12 +6,12 @@
 # Copyright 1999-2006 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 ######################################################################
 
 package IPC::PidStat;
@@ -21,7 +21,6 @@ use IPC::Locker;
 use Socket;
 use Time::HiRes qw(gettimeofday tv_interval);
 use IO::Socket;
-use Sys::Hostname;
 use POSIX;
 
 use strict;
@@ -47,8 +46,10 @@ sub new {
     my $self = {
 	socket=>undef,	# IO::Socket handle of open socket
 	tries=>5,
-	#Documented
+	# Documented
 	port=>$IPC::Locker::Default_PidStat_Port,
+	# Internal
+	_host_ips => {},	# Resolved IP address of hosts
 	@_,};
     bless $self, $class;
     return $self;
@@ -78,8 +79,15 @@ sub pid_request {
     $self->open_socket();  #open if not already
 
     my $out_msg = "PIDR $params{pid}\n";
-    my $ipnum = inet_aton($params{host})
-	or die "%Error: Can't find host $params{host}\n";
+
+    my $ipnum = $self->{_host_ips}->{$params{host}};
+    if (!$ipnum) {
+	# inet_aton("name") calls gethostbyname(), which chats with the
+	# NS cache socket and NIS server.  Too costly in a polling loop.
+	$ipnum = inet_aton($params{host})
+	    or die "%Error: Can't find host $params{host}\n";
+	$self->{_host_ips}->{$params{host}} = $ipnum;
+    }
     my $dest = sockaddr_in($self->{port}, $ipnum);
     $self->fh->send($out_msg,0,$dest);
 }
@@ -113,10 +121,11 @@ sub pid_request_recv {
 	    @recved = $self->recv_stat();
 	    alarm(0);
 	};
+	alarm(0) if $@;
 	return @recved if defined $recved[0];
     }
     return undef;
-}    
+}   
 
 ######################################################################
 #### Status checking

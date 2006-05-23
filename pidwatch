@@ -70,7 +70,7 @@ if ($opt_cd && -d $opt_cd) {
 }
 
 # Debugging
-my $dbgfh = \&STDERR;
+my $dbgfh = \*STDERR;
 #$dbgfh = IO::File->new("$ENV{HOME}/pidwatch_$$","w") if $Debug;
 print $dbgfh "\tArgs: @Orig_Argv\n" if $Debug;
 
@@ -88,7 +88,9 @@ if (my $pid = fork()) {  # Parent process, foreground job
 	die "%Error: Child died with status $?,";
     }
 
-    exec ("/bin/sh", "-c", join(' ', map{"'$_'"} @Opt_FgArgv));
+    my $shArg = join(' ', map{"$_"} @Opt_FgArgv);
+    print $dbgfh "\t/bin/sh -c $shArg\n" if $Debug;
+    exec ("/bin/sh", "-c", $shArg);
     die "%Error: Exec failed: @Opt_FgArgv,";
 }
 #else, rest is for child process.
@@ -203,8 +205,8 @@ An example Perl application would invoke:
 =item <parameters>
 
 All non switch arguments after the switches are passed to /bin/sh as a -c
-argument.  Each argument is then single quoted.  Thus passing "'a && b'" to
-pidwatch will result in pidwatch executing "/bin/sh -c 'a && b'".
+argument.  Thus passing "a && b" to pidwatch will result in pidwatch
+executing "/bin/sh -c 'a && b'".
 
 =item --cd I<dir>
 

@@ -30,7 +30,8 @@ print "IPC::Locker VERSION $IPC::Locker::VERSION\n";
 # Server Constructor
 
 use IPC::Locker::Server;
-%SLArgs = (port=>socket_find_free(12345));
+%SLArgs = (port=>socket_find_free(12345),
+	   host=>'localhost');
 
 if ($Serv_Pid = fork()) {
 } else {
@@ -46,7 +47,7 @@ sleep(1); #Let server get established
 my $lock = new IPC::Locker(%SLArgs,
 			   timeout=>10,
 			   print_down=>sub { die "\n%Error: Can't locate lock server\n"
-						 . "\tRun './lockerd &' before this test\n";
+						 . "\tServer must have not started in previous step\n";
 					 }
 			   );
 ok ($lock);
