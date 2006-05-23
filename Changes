@@ -2,6 +2,10 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
+* IPC::Locker 1.45**
+
+***	All program arguments to pidwatch are now single quoted '' to the shell.
+
 * IPC::Locker 1.450 5/16/2006
 
 **	Created lockersh program for adding locks around other programs.

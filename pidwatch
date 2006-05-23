@@ -88,7 +88,7 @@ if (my $pid = fork()) {  # Parent process, foreground job
 	die "%Error: Child died with status $?,";
     }
 
-    exec ("/bin/sh", "-c", join(' ',@Opt_FgArgv));
+    exec ("/bin/sh", "-c", join(' ', map{"'$_'"} @Opt_FgArgv));
     die "%Error: Exec failed: @Opt_FgArgv,";
 }
 #else, rest is for child process.
@@ -199,6 +199,12 @@ An example Perl application would invoke:
 =head1 ARGUMENTS
 
 =over 4
+
+=item <parameters>
+
+All non switch arguments after the switches are passed to /bin/sh as a -c
+argument.  Each argument is then single quoted.  Thus passing "'a && b'" to
+pidwatch will result in pidwatch executing "/bin/sh -c 'a && b'".
 
 =item --cd I<dir>
 
