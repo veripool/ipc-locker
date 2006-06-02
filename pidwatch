@@ -31,6 +31,7 @@ our $Opt_Host = hostname();
 our $Opt_Pid;
 our $Opt_Signal = 'HUP';
 our $Opt_Killer;
+our $Opt_Foreground;
 
 #======================================================================
 # main
@@ -52,6 +53,7 @@ if (! GetOptions (
 		  "host=s"	=> \$Opt_Host,
 		  "pid=i"	=> \$Opt_Pid,
 		  "cd=s"	=> \$opt_cd,
+		  "foreground=i"=> \$Opt_Foreground,
 		  "signal=s"	=> \$Opt_Signal,
 		  "killer=s"	=> \$Opt_Killer,
 		  "<>"		=> \&parameter,
@@ -62,7 +64,11 @@ push @Opt_FgArgv, @ARGV;
 
 $Opt_Host or die "%Error: --host not specified\n";
 $Opt_Pid or die "%Error: --pid not specified\n";
-$Opt_FgArgv[0] or die "%Error: No command specified\n";
+if ($Opt_Foreground) {
+    !$Opt_FgArgv[0] or die "%Error: --foreground option does not take additional command arguments\n";
+} else {
+    $Opt_FgArgv[0] or die "%Error: No command specified\n";
+}
 
 if ($opt_cd && -d $opt_cd) {
     $ENV{PWD} = $opt_cd;
@@ -75,7 +81,7 @@ my $dbgfh = \*STDERR;
 print $dbgfh "\tArgs: @Orig_Argv\n" if $Debug;
 
 # Fork once to start parent process
-my $foreground_pid = $$;  # Unlike most forks, the job goes in the parent
+my $foreground_pid = $Opt_Foreground || $$;  # Unlike most forks, the job goes in the parent
 
 if (my $pid = fork()) {  # Parent process, foreground job
     print $dbgfh "\tForeground: @Opt_FgArgv\n" if $Debug;
@@ -88,10 +94,14 @@ if (my $pid = fork()) {  # Parent process, foreground job
 	die "%Error: Child died with status $?,";
     }
 
-    my $shArg = join(' ', map{"$_"} @Opt_FgArgv);
-    print $dbgfh "\t/bin/sh -c $shArg\n" if $Debug;
-    exec ("/bin/sh", "-c", $shArg);
-    die "%Error: Exec failed: @Opt_FgArgv,";
+    if ($Opt_Foreground) {
+	exit(0);  # Not relevant
+    } else {
+	my $shArg = join(' ', map{"$_"} @Opt_FgArgv);
+	print $dbgfh "\t/bin/sh -c $shArg\n" if $Debug;
+	exec ("/bin/sh", "-c", $shArg);
+	die "%Error: Exec failed: @Opt_FgArgv,";
+    }
 }
 #else, rest is for child process.
 
@@ -178,18 +188,23 @@ pidwatch - Run a command and if another PID exits, kill the command
 
 =head1 SYNOPSIS
 
-  pidwatch [--cd I<cd>] --host <host> --pid <pid>  [args....]
+  pidwatch [--cd I<cd>] --host <host> --pid <pid>  args[....]
+  pidwatch [--cd I<cd>] --host <host> --pid <pid> --foreground <pid>
 
 =head1 DESCRIPTION
 
-Chdir to the specified directory, if specified and possible.
+Chdir to the specified directory, if specified and possible, then run the
+arguments as a command in the foreground.  When the foreground process
+exits, return its exit status.  This is basically the same as running the
+command directly.
 
-Run the arguments as a command in the foreground.  When the foreground
-process exits, return its exit status.
-
-In the background, watch the specified pid on the specified host.  If
+In the background, watch the foreground pid on the specified host.  If
 L<pidstatd> is running on the specified host, and the specified pid goes
 away, kill the foreground command.
+
+Alternatively pass the PID of any process with --foreground, when that
+process exits, the background job exits; if the watched PID exits, the
+foreground pid is killed.
 
 Common usage is to kill remote rsh children when a parent is kill -9ed.
 An example Perl application would invoke:
@@ -225,6 +240,11 @@ on that host to have this program be useful.
 
 Program to use instead of kill when it's time to terminate the pid.  Will
 be passed arguments as if it was /bin/kill (I<program> I<signame> I<pid>).
+
+=item --foreground I<pid>
+
+Process ID to be killed when watched process exits.  Used to watch a
+preexisting PID, instead of launching commands under a shell.
 
 =item --pid I<pid>
 

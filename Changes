@@ -2,6 +2,10 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
+* IPC::Locker 1.45**
+
+***	Add pidwatch --foreground switch.
+
 * IPC::Locker 1.451 5/23/2006
 
 ****	Cache IP addresses to avoid name server traffic. [by Greg Waters]

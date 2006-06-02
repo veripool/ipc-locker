@@ -13,7 +13,7 @@ use Test;
 use strict;
 use vars qw (%SLArgs $Serv_Pid);
 
-BEGIN { plan tests => 13 }
+BEGIN { plan tests => 14 }
 BEGIN { require "t/test_utils.pl"; }
 
 END { kill 'TERM', $Serv_Pid; }
@@ -82,6 +82,13 @@ ok (1);
     chomp $rtn;
     print "returns: $rtn\n";
     ok($rtn eq "");
+}
+
+{   print "pidwatch immediate exit:\n";
+    my $rtn = `$PERL ./pidwatch --port $SLArgs{port} --pid 1 --foreground $$`;
+    chomp $rtn;
+    print "returns: $rtn\n";
+    ok(1);
 }
 
 #########################
