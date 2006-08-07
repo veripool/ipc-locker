@@ -2,7 +2,11 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
-* IPC::Locker 1.45**
+* IPC::Locker 1.452 8/7/2006
+
+***	Destroy_unlock now only unlocks when the current pid matches the pid
+	that requested the lock, to prevent forked processes from unlocking
+	the lock.  [Jeff Dutton]
 
 ***	Add pidwatch --foreground switch.
 
