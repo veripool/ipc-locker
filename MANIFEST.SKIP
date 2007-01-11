@@ -3,7 +3,7 @@
 .cvsignore$
 pm_to_blib$
 ,v$
-\.(bak|old)$
+\.(bak|new|old)$
 \bMakefile$
 ^MANIFEST.SKIP$
 \.wpsin$

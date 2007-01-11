@@ -31,10 +31,10 @@ preexist:
 	test ! -r \$(HOME)/src/kits/\$(DISTVNAME).tar.gz
 
 tag:
-	cvs tag -F \$(DISTNAME)_\$(VERSION_SYM) .
+	svnorcvs tag  \$(DISTNAME)_\$(VERSION_SYM)
 
 maintainer-diff:
-	cvs diff -r \$(DISTNAME)_\$(VERSION_SYM) 
+	svnorcvs diff \$(DISTNAME)_\$(VERSION_SYM) 
 
 maintainer-dist: preexist dist tag
 	cp \$(DISTVNAME).tar.gz \$(HOME)/src/kits

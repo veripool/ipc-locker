@@ -19,6 +19,7 @@ pidwatch
 README
 readme.texi
 t/00_pod.t
+t/01_manifest.t
 t/20_pidstat.t
 t/40_locker.t
 t/45_lockersh.t

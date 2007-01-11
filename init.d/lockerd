@@ -28,10 +28,11 @@ prog=/usr/local/bin/lockerd
 
 case $state in
   start)
-
+        if [ -f $prog ]; then
 	    echo starting $prog
 	    su daemon -c $prog &
 	fi
+	exit 0
         ;;
   stop)
         if test "x`pidof -o $$ -o $PPID -x lockerd`" != x; then
