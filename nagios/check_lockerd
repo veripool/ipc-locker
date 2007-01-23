@@ -2,7 +2,7 @@
 # $Id$
 ######################################################################
 #
-# Copyright 2006-2006 by Wilson Snyder <wsnyder@wsnyder.org>.  This
+# Copyright 2006-2007 by Wilson Snyder <wsnyder@wsnyder.org>.  This
 # program is free software; you can redistribute it and/or modify it under
 # the terms of either the GNU Lesser General Public License or the Perl
 # Artistic License.
@@ -141,7 +141,7 @@ Specifies the port number to contact the "lockerd" on.  (default 1752)
 
 The latest version is available from CPAN and from L<http://www.veripool.com/>.
 
-Copyright 2006-2006 by Wilson Snyder.  This package is free software; you
+Copyright 2006-2007 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License or the Perl Artistic License.
 

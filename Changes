@@ -2,7 +2,7 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
-* IPC::Locker 1.46*
+* IPC::Locker 1.460 1/23/2007
 
 **	Support locking across multiple domains.  [Daniel DeFolo]
 
@@ -115,7 +115,7 @@ DESCRIPTION: Documentation on change history for this package
 
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
-Copyright 1999-2006 by Wilson Snyder.  This program is free software;
+Copyright 1999-2007 by Wilson Snyder.  This program is free software;
 you can redistribute it and/or modify it under the terms of either the GNU
 General Public License or the Perl Artistic License.
 
