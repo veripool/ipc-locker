@@ -17,17 +17,17 @@ require 5.006_001;
 use Getopt::Long;
 use IO::File;
 use Pod::Usage;
-use Sys::Hostname;
 use Cwd qw (getcwd chdir);
 use strict;
 use vars qw ($Debug);
 use IPC::PidStat;
+use IPC::Locker;
 
 #======================================================================
 
 our @Orig_Argv = @ARGV;
 our @Opt_FgArgv;
-our $Opt_Host = hostname();
+our $Opt_Host = IPC::Locker::hostfqdn();
 our $Opt_Pid;
 our $Opt_Signal = 'HUP';
 our $Opt_Killer;

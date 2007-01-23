@@ -17,7 +17,6 @@ require 5.006_001;
 use Getopt::Long;
 use IO::File;
 use Pod::Usage;
-use Sys::Hostname;
 use Cwd qw (getcwd chdir);
 use strict;
 use vars qw ($Debug);
@@ -53,7 +52,7 @@ if (! GetOptions (
 		  #
 		  "<>"		=> \&parameter,
 		  )) {
-    usage();
+    die "%Error: Bad usage, see lockersh --help\n";
 }
 push @Opt_FgArgv, @ARGV;
 
@@ -68,7 +67,7 @@ if ($Opt_Locklist) {
     exit(0);
 }
 
-$#{$server_params{lock}}>=0 or die "%Error: --lock not specified\n";
+$#{$server_params{lock}}>=0 or die "%Error: --lock not specified; see --help\n";
 $Opt_FgArgv[0] or die "%Error: No command specified\n";
 
 # Fork once to start parent process

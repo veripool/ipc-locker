@@ -6,6 +6,7 @@ version_from: lib/IPC/Locker.pm
 license:      perl
 installdirs:  site
 requires:
+    Net::Domain:                   0
     Time::HiRes:                   0
 
 distribution_type: module

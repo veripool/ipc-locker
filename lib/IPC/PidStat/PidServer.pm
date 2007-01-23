@@ -22,7 +22,6 @@ require Exporter;
 use IPC::Locker;
 use Socket;
 use IO::Socket;
-use Sys::Hostname;
 
 use strict;
 use vars qw($VERSION $Debug $Hostname);
@@ -36,7 +35,7 @@ $Debug = 0;
 
 $VERSION = '1.452';
 
-$Hostname = hostname();
+$Hostname = IPC::Locker::hostfqdn();
 
 ######################################################################
 #### Creator

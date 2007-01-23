@@ -2,6 +2,12 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
+* IPC::Locker 1.46*
+
+**	Support locking across multiple domains.  [Daniel DeFolo]
+
+***	Use fully qualified domain name instead of hostname. [Daniel DeFolo]
+
 * IPC::Locker 1.452 8/7/2006
 
 ***	Destroy_unlock now only unlocks when the current pid matches the pid

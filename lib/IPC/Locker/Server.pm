@@ -80,7 +80,6 @@ use IPC::Locker;
 use Socket;
 use IO::Socket;
 use IO::Select;
-use Sys::Hostname;
 
 use IPC::PidStat;
 use strict;
@@ -94,7 +93,7 @@ use Carp;
 $Debug = 0;
 
 $VERSION = '1.452';
-$Hostname = (hostname() || "localhost");
+$Hostname = IPC::Locker::hostfqdn();
 
 ######################################################################
 #### Globals

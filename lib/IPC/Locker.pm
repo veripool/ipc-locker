@@ -226,7 +226,7 @@ require 5.004;
 require Exporter;
 @ISA = qw(Exporter);
 
-use Sys::Hostname;
+use Net::Domain;
 use Socket;
 use Time::HiRes qw(gettimeofday tv_interval);
 use IO::Socket;
@@ -261,7 +261,7 @@ sub new {
     @_ >= 1 or croak 'usage: IPC::Locker->new ({options})';
     my $proto = shift;
     my $class = ref($proto) || $proto;
-    my $hostname = hostname() || "localhost";
+    my $hostname = hostfqdn();
     my $self = {
 	#Documented
 	host=>($ENV{IPCLOCKER_HOST}||'localhost'),
@@ -282,12 +282,20 @@ sub new {
 	#Internal
 	locked=>0,
 	@_,};
-    $self->{user} ||= hostname() . "_".$self->{pid}."_" . ($ENV{USER} || "");
+    $self->{user} ||= hostfqdn() . "_".$self->{pid}."_" . ($ENV{USER} || "");
     foreach (_array_or_one($self->{lock})) {
 	($_ !~ /\s/) or carp "%Error: Lock names cannot contain whitespace: $_\n";
     }
     bless $self, $class;
     return $self;
+}
+
+######################################################################
+#### Static Accessors
+
+sub hostfqdn {
+    # Return hostname() including domain name
+    return Net::Domain::hostfqdn();
 }
 
 ######################################################################
