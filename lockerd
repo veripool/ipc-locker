@@ -92,6 +92,7 @@ sub version {
 sub debug {
     $Debug = 1;
     $IPC::Locker::Server::Debug = 1;
+    $IPC::PidStat::Debug = 1;
 }
 
 ######################################################################

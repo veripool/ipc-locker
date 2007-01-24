@@ -2,6 +2,11 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
+* IPC::Locker 1.461 **
+
+****	Pass full hostname through IPC::PidStat daemons.
+	This prevents problems with version 1.460 mixed with earlier daemons.
+
 * IPC::Locker 1.460 1/23/2007
 
 **	Support locking across multiple domains.  [Daniel DeFolo]

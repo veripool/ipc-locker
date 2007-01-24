@@ -223,7 +223,8 @@ Print 'waiting for lock' and similar messages.
 
 =item IPCLOCKER_HOST
 
-Hostname of L<lockerd> server.  Defaults to localhost.
+Hostname of L<lockerd> server, or colon separated list including backup
+servers.  Defaults to localhost.
 
 =item IPCLOCKER_PORT
 

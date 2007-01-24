@@ -190,7 +190,8 @@ True to print messages when waiting for locks.  Defaults false.
 
 =item IPCLOCKER_HOST
 
-Hostname of L<lockerd> server.  Defaults to localhost.
+Hostname of L<lockerd> server, or colon separated list including backup
+servers.  Defaults to localhost.
 
 =item IPCLOCKER_PORT
 

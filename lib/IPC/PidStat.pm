@@ -78,7 +78,7 @@ sub pid_request {
 
     $self->open_socket();  #open if not already
 
-    my $out_msg = "PIDR $params{pid}\n";
+    my $out_msg = "PIDR $params{pid} $params{host}\n";
 
     my $ipnum = $self->{_host_ips}->{$params{host}};
     if (!$ipnum) {
