@@ -5,7 +5,7 @@ The contributors that suggested a given feature are shown in [].
 * IPC::Locker 1.461 1/24/2007
 
 ****	Pass full hostname through IPC::PidStat daemons.
-	This prevents problems with version 1.460 mixed with earlier daemons.
+	This allows lockerd to process returns from hosts with aliased names.
 
 * IPC::Locker 1.460 1/23/2007
 
