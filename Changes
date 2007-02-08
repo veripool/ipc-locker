@@ -2,6 +2,10 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
+* IPC::Locker 1.46***
+
+***	Fix requested pid not being passed down to server.  [Vasu Arasanipalai]
+
 * IPC::Locker 1.461 1/24/2007
 
 ****	Pass full hostname through IPC::PidStat daemons.

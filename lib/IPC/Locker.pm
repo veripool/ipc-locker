@@ -424,7 +424,7 @@ sub _request {
 	       ."block ".($self->{block}||0)."\n"
 	       ."timeout ".($self->{timeout}||0)."\n");
     $req.=    ("autounlock ".($self->{autounlock}||0)."\n"
-	       ."pid $$\n"
+	       ."pid ".($self->{pid}||$$)."\n"
 	       ."hostname ".($self->{hostname})."\n"
 	       ) if $self->{autounlock};
     $req.=    ("$cmd\n");
