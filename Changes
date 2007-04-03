@@ -2,7 +2,7 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
-* IPC::Locker 1.46***
+* IPC::Locker 1.462 4/3/2007
 
 ***	Fix requested pid not being passed down to server.  [Vasu Arasanipalai]
 
