@@ -58,7 +58,7 @@ if (! GetOptions (
 		  "killer=s"	=> \$Opt_Killer,
 		  "<>"		=> \&parameter,
 		  )) {
-    usage();
+    die "%Error: Bad usage, try 'pidwatch --help'\n";
 }
 push @Opt_FgArgv, @ARGV;
 

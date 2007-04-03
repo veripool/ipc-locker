@@ -165,7 +165,7 @@ first argument is self.  Defaults to a croak message.
 The maximum time in seconds that the lock may be held before being forced
 open, passed to the server when the lock is created.  Thus if the requester
 dies, the lock will be released after that amount of time.  Zero disables
-the timeout.  Defaults to 10 minutes.
+the timeout.  Defaults to 30 minutes.
 
 =item user
 

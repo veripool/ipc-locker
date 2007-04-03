@@ -16,7 +16,7 @@
 require 5.004;
 use lib './blib/lib';        # testing
 use Getopt::Long;
-use Pod::Text;
+use Pod::Usage;
 use IPC::PidStat;
 use strict;
 
@@ -45,7 +45,7 @@ if (!GetOptions(
 		"silent!"	=> \$opt_silent,
 		"<>"		=> sub {push @params, shift;},
 		)) {
-    &usage();
+    die "%Error: Bad usage, try 'pidstat --help'\n";
 }
 
 {
@@ -63,8 +63,7 @@ exit(0);
 
 sub usage {
     print '$Id$ ', "\n";
-    $SIG{__WARN__} = sub{};        #pod2text isn't clean.
-    pod2text($0);
+    pod2usage(-verbose=>2, -exitval => 2);
     exit(1);
 }
 

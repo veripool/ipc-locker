@@ -55,6 +55,7 @@ WriteMakefile(
 	      ABSTRACT_FROM => 'lib/IPC/Locker.pm',
 	      VERSION_FROM => 'lib/IPC/Locker.pm',
 	      PREREQ_PM => {'Net::Domain' => 0,
+			    'Pod::Usage' => 0,
 			    'Time::HiRes' => 0,
 			},
 	      NO_META	=> 1,

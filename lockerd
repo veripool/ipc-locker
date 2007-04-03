@@ -18,7 +18,7 @@
 require 5.004;
 use lib './blib/lib';	# testing
 use Getopt::Long;
-use Pod::Text;
+use Pod::Usage;
 use IPC::Locker::Server;
 use strict;
 
@@ -48,7 +48,8 @@ if (!GetOptions (
 		 "path=s"	=> sub {$server_params{port} = $_[1];
     	    	    		        $server_params{family}='UNIX';},
 		 )) {
-    &usage(); }
+    die "%Error: Bad usage, try 'lockerd --help'\n";
+}
 
 # Loop in case something kills us
 $SIG{HUP}  = \&sig_HUP;
@@ -78,8 +79,7 @@ sub sig_HUP {
 
 sub usage {
     print '$Id$ ', "\n";
-    $SIG{__WARN__} = sub{};	#pod2text isn't clean.
-    pod2text($0);
+    pod2usage(-verbose=>2, -exitval => 2);
     exit(1);
 }
 

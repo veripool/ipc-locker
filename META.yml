@@ -7,6 +7,7 @@ license:      perl
 installdirs:  site
 requires:
     Net::Domain:                   0
+    Pod::Usage:                    0
     Time::HiRes:                   0
 
 distribution_type: module
