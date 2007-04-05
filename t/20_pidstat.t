@@ -94,7 +94,10 @@ ok (1);
 #########################
 # Nagios script check
 
-{   print "check_pidstat:\n";
+print "check_pidstat:\n";
+if (!-d "/usr/lib/nagios/plugins") {
+    skip("nagios not installed (harmless)",1);
+} else {
     # Note we may not be running as root, so need to check $$, not init.
     my $rtn = `$PERL nagios/check_pidstatd --port $SLArgs{port} --pid $$`;
     chomp $rtn;
