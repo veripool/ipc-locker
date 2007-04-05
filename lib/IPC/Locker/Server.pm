@@ -92,7 +92,7 @@ use Carp;
 # Other configurable settings.
 $Debug = 0;
 
-$VERSION = '1.462';
+$VERSION = '1.463';
 $Hostname = IPC::Locker::hostfqdn();
 
 ######################################################################
