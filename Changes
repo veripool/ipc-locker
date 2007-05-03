@@ -2,6 +2,10 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
+* IPC::Locker 1.46***
+
+****	Scripts are now distributed under the script directory.
+
 * IPC::Locker 1.463 4/5/2007
 
 ****	Fix 'make test' issues on systems without Nagios.  [cpan-testers]

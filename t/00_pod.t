@@ -14,5 +14,5 @@ if ($@) {
     print "1..1\n";
     print "ok 1 # skip Test::Pod not installed so ignoring Pod check (harmless)";
 } else {
-    all_pod_files_ok();
+    all_pod_files_ok(all_pod_files(qw(lib script)));
 }

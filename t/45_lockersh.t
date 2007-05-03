@@ -36,14 +36,14 @@ sleep(1); #Let server get established
 # Test lockersh
 
 {   print "lockersh:\n";
-    my $rtn = `$PERL ./lockersh --dhost localhost --port $SLArgs{port} --lock lockersh_test echo OK`;
+    my $rtn = `$PERL script/lockersh --dhost localhost --port $SLArgs{port} --lock lockersh_test echo OK`;
     chomp $rtn;
     print "returns: $rtn\n";
     ok($rtn eq "OK");
 }
 
 {   print "lockersh --locklist:\n";
-    my $rtn = `$PERL ./lockersh --dhost localhost --port $SLArgs{port} --locklist`;
+    my $rtn = `$PERL script/lockersh --dhost localhost --port $SLArgs{port} --locklist`;
     ok(1);
 }
 

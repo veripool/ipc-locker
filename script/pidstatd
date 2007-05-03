@@ -27,8 +27,6 @@ BEGIN { $ENV{PATH} = '/usr/ucb:/bin' }	# Secure path
 ######################################################################
 # configuration
 
-$0 = 'pidstatd';   # So ps and pidof can find this daemon
-
 ######################################################################
 # globals
 
@@ -50,6 +48,9 @@ if (!GetOptions (
 		 )) {
     die "%Error: Bad usage, try 'pidstatd --help'\n";
 }
+
+# Must be after we've done --help
+$0 = 'pidstatd';   # So ps and pidof can find this daemon
 
 if (!$Debug) {
     if ($opt_fork) {

@@ -69,7 +69,7 @@ ok (1);
 
 # We use init's pid (1), which had better be running :)
 {   print "pidwatch ok:\n";
-    my $rtn = `$PERL ./pidwatch --port $SLArgs{port} --pid 1 echo hello`;
+    my $rtn = `$PERL script/pidwatch --port $SLArgs{port} --pid 1 echo hello`;
     chomp $rtn;
     print "returns: $rtn\n";
     ok(1);
@@ -78,14 +78,14 @@ ok (1);
 
 {   print "pidwatch fail:\n";
     my $nonexist_pid = 999999;  # not even legal
-    my $rtn = `$PERL ./pidwatch --port $SLArgs{port} --pid $nonexist_pid "sleep 1 ; echo never_executed"`;
+    my $rtn = `$PERL script/pidwatch --port $SLArgs{port} --pid $nonexist_pid "sleep 1 ; echo never_executed"`;
     chomp $rtn;
     print "returns: $rtn\n";
     ok($rtn eq "");
 }
 
 {   print "pidwatch immediate exit:\n";
-    my $rtn = `$PERL ./pidwatch --port $SLArgs{port} --pid 1 --foreground $$`;
+    my $rtn = `$PERL script/pidwatch --port $SLArgs{port} --pid 1 --foreground $$`;
     chomp $rtn;
     print "returns: $rtn\n";
     ok(1);

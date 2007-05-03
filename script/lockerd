@@ -32,8 +32,6 @@ BEGIN { $ENV{PATH} = '/usr/ucb:/bin' }	# Secure path
 
 use vars qw($Pid);
 
-$0 = 'lockerd';   # So ps and pidof can find this daemon
-
 ######################################################################
 # main
 
@@ -50,6 +48,9 @@ if (!GetOptions (
 		 )) {
     die "%Error: Bad usage, try 'lockerd --help'\n";
 }
+
+# Must be after we've done --help
+$0 = 'lockerd';   # So ps and pidof can find this daemon
 
 # Loop in case something kills us
 $SIG{HUP}  = \&sig_HUP;
