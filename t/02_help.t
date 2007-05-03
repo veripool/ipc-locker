@@ -9,10 +9,11 @@
 use strict;
 use Test;
 
-BEGIN { plan tests => 5*2 }
 BEGIN { require "t/test_utils.pl"; }
+my @execs = (glob("script/[a-z]*"));
+plan tests => (2 * ($#execs+1));
 
-foreach my $exe (glob("script/[a-z]*")) {
+foreach my $exe (@execs) {
     print "Doc test of: $exe\n";
     ok (-e $exe);
     my $help = `$PERL $exe --help 2>&1`;

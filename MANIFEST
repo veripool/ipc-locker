@@ -18,10 +18,12 @@ script/lockersh
 script/pidstat
 script/pidstatd
 script/pidwatch
+script/uriexec
 t/00_pod.t
 t/01_manifest.t
 t/02_help.t
 t/20_pidstat.t
 t/40_locker.t
 t/45_lockersh.t
+t/50_uriexec.t
 t/test_utils.pl

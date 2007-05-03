@@ -4,6 +4,8 @@ The contributors that suggested a given feature are shown in [].
 
 * IPC::Locker 1.46***
 
+**	Add uriexec.  [by Jeff Dutton]
+
 ****	Scripts are now distributed under the script directory.
 
 * IPC::Locker 1.463 4/5/2007

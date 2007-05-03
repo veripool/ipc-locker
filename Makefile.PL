@@ -61,7 +61,8 @@ WriteMakefile(
 	      NO_META	=> 1,
 	      EXE_FILES => [qw( script/lockerd script/lockersh
 				script/pidstat script/pidstatd
-				script/pidwatch )],
+				script/pidwatch
+				script/uriexec )],
 	      'dist'    => {COMPRESS => 'gzip -9f',
 			    SUFFIX   => '.gz', 
 			    DIST_DEFAULT => 'README all tardist',
