@@ -64,9 +64,16 @@ pidstatd' after installation.
 --------------
 
 pidwatch is a program which starts other programs, and kill that program
-when another job exists.  `man pidwatch' after installation.
+when another job exists.  See `man pidwatch' after installation.
 
-1.2.7 check_lockerd and check_pidstatd
+1.2.7 uriexec
+-------------
+
+uriexec is a simple wrapper which allows executing a command which is
+quoted using URI escapes.  This prevents layered shells from
+interpreting special characters.  See `man uriexec' after installation.
+
+1.2.8 check_lockerd and check_pidstatd
 --------------------------------------
 
 check_lockerd and check_pidstatd are Nagios plugins to check lockerd
