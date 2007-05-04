@@ -75,7 +75,14 @@ pidstat is the daemon that supports IPC::PidStat and pidstat. See
 @subsection pidwatch
 
 pidwatch is a program which starts other programs, and kill that program
-when another job exists.  @samp{man pidwatch} after installation.
+when another job exists.  See @samp{man pidwatch} after installation.
+
+@subsection uriexec
+
+uriexec is a simple wrapper which allows executing a command which is
+quoted using URI escapes.  This prevents layered shells from
+interpreting special characters.  See @samp{man uriexec} after
+installation.
 
 @subsection check_lockerd and check_pidstatd
 

@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# $Id:$
+# $Id$
 ######################################################################
 #
 # Copyright 2005-2007 by Jeff Dutton <jdutton@cpan.org>.  This program is
@@ -133,6 +133,6 @@ Jeff Dutton <jdutton@cpan.org>, Wilson Snyder <wsnyder@wsnyder.org>
 
 =head1 SEE ALSO
 
-L<URI::Escape>
+L<URI::Escape>, L<IPC::Locker>
 
 =cut

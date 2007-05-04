@@ -276,7 +276,7 @@ Wilson Snyder <wsnyder@wsnyder.org>
 
 =head1 SEE ALSO
 
-L<IPC::Locker>, L<IPC::PidStat>, L<pidstat>, L<pidstatd>
+L<IPC::Locker>, L<IPC::PidStat>, L<pidstat>, L<pidstatd>, L<uriexec>
 
 =cut
 
