@@ -2,6 +2,10 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
+* IPC::Locker 1.47***
+
+****	Fix loosing $@ in evals due to IO::Socket::INET bug.  [Bryce Denney]
+
 * IPC::Locker 1.470 5/4/2007
 
 **	Add uriexec.  [by Jeff Dutton]
