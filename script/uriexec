@@ -27,6 +27,7 @@ use vars qw(@CmdParts);
 my $Opt_Cd;
 my @Opt_Param;
 my $Opt_Shell = "/bin/sh -c";
+my $opt_show;
 
 autoflush STDOUT;
 autoflush STDERR;
@@ -36,6 +37,7 @@ if (! GetOptions (
 		  "help"	=> \&usage,
 		  "cd=s"	=> \$Opt_Cd,
 		  "shell=s"	=> \$Opt_Shell,
+		  "show!"	=> \$opt_show,
 		  )) {
     die "%Error: Bad usage, try 'uriexec --help'\n";
 }
@@ -44,6 +46,13 @@ $#opt_cmd >= 0 or die "%Error: uriexec: No command specified, see 'uriexec --hel
 
 push (@Opt_Param, @ARGV); # Any remaining arguments (i.e. after a -- on the command line)
 @Opt_Param or die "%Error: uriexec: No command argument was specified\n";
+
+if ($opt_show) {
+    print "cd    ",user_decode($Opt_Cd),"\n" if $Opt_Cd;
+    print "shell ",user_decode($Opt_Shell),"\n" if $Opt_Shell;
+    print "cmd   ",user_decode(join(' ',@Opt_Param)),"\n";
+    exit(0) if $opt_show;
+}
 
 if ($Opt_Cd) {
     my $dir = uri_decode($Opt_Cd);
@@ -74,6 +83,18 @@ sub uri_decode {
     $str =~ tr/+/ /; # Plus encodes a space
     $str =~ s/%([a-fA-F0-9]{2,2})/chr(hex($1))/eg; # Decode the % encoding
     return $str;
+}
+
+sub user_decode {
+    my $str = shift;
+    my $level = shift || 1;
+    # Recursively decode a string for user's convenience
+    $str = uri_decode($str);
+    if ($str =~ /(.*?\buriexec\s)(.*)$/) {
+	$str = $1." ".user_decode($2,$level+1);
+	return "{${level}{ ".$str." }$level} ";
+    }
+    return "{${level}{ ".$str." }$level} ";
 }
 
 #######################################################################
@@ -113,6 +134,13 @@ Directory to cd to before the exec of the given command, URI-encoded.
 
 Name of the shell and additional parameters to prefix, URI-encoded.
 Defaults to "/bin/sh -c".
+
+=item --show
+
+Instead of executing the command, print the decoding of the command to aid
+in user debug.  This also supports decoding nested uriexec calls, however
+they are not always perfect so the output from this option is only for
+users, not scripts.
 
 =back
 

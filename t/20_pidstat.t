@@ -69,25 +69,19 @@ ok (1);
 
 # We use init's pid (1), which had better be running :)
 {   print "pidwatch ok:\n";
-    my $rtn = `$PERL script/pidwatch --port $SLArgs{port} --pid 1 echo hello`;
-    chomp $rtn;
-    print "returns: $rtn\n";
+    my $rtn = run_rtn("$PERL script/pidwatch --port $SLArgs{port} --pid 1 echo hello");
     ok(1);
     ok($rtn eq "hello");
 }
 
 {   print "pidwatch fail:\n";
     my $nonexist_pid = 999999;  # not even legal
-    my $rtn = `$PERL script/pidwatch --port $SLArgs{port} --pid $nonexist_pid "sleep 1 ; echo never_executed"`;
-    chomp $rtn;
-    print "returns: $rtn\n";
+    my $rtn = run_rtn("$PERL script/pidwatch --port $SLArgs{port} --pid $nonexist_pid \"sleep 1 ; echo never_executed\"");
     ok($rtn eq "");
 }
 
 {   print "pidwatch immediate exit:\n";
-    my $rtn = `$PERL script/pidwatch --port $SLArgs{port} --pid 1 --foreground $$`;
-    chomp $rtn;
-    print "returns: $rtn\n";
+    my $rtn = run_rtn("$PERL script/pidwatch --port $SLArgs{port} --pid 1 --foreground $$");
     ok(1);
 }
 
@@ -99,9 +93,7 @@ if (!-d "/usr/lib/nagios/plugins") {
     skip("nagios not installed (harmless)",1);
 } else {
     # Note we may not be running as root, so need to check $$, not init.
-    my $rtn = `$PERL nagios/check_pidstatd --port $SLArgs{port} --pid $$`;
-    chomp $rtn;
-    print "return: $rtn\n";
+    my $rtn = run_rtn("$PERL nagios/check_pidstatd --port $SLArgs{port} --pid $$");
     ok($rtn =~ /OK/);
 }
 

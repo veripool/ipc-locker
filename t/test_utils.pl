@@ -21,6 +21,17 @@ if (!$ENV{HARNESS_ACTIVE}) {
 }
 
 ######################################################################
+# Run
+
+sub run_rtn {
+    my $cmd = shift;
+    print "\t$cmd\n";
+    my $rtn = `$cmd`;
+    chomp $rtn;
+    print "\treturns: $rtn\n";
+    return $rtn;
+}
+
 ######################################################################
 # Socket subroutines
 
