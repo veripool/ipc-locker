@@ -107,7 +107,8 @@ ok (1);
 {
     # Check errors get passed thru
     my $ret = eval {
-	my $lock = IPC::Locker->lock (lock => "locker_subdie_test_$$");
+	my $lock = IPC::Locker->lock (%SLArgs,
+				      lock => "locker_subdie_test_$$");
         die "EXPECTED_DIE_in_EVAL";
     };
     my $eval_err = $@;

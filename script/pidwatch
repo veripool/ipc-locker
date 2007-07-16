@@ -198,13 +198,13 @@ arguments as a command in the foreground.  When the foreground process
 exits, return its exit status.  This is basically the same as running the
 command directly.
 
-In the background, watch the foreground pid on the specified host.  If
+In the background, watch the specified pid on the specified host.  If
 L<pidstatd> is running on the specified host, and the specified pid goes
 away, kill the foreground command.
 
-Alternatively pass the PID of any process with --foreground, when that
-process exits, the background job exits; if the watched PID exits, the
-foreground pid is killed.
+Alternatively pass the PID of any process with --foreground.  When the
+foreground process exits, the background job exits; if the specified
+watched PID exits, the foreground pid is killed.
 
 Common usage is to kill remote rsh children when a parent is kill -9ed.
 An example Perl application would invoke:
@@ -212,6 +212,13 @@ An example Perl application would invoke:
     system("rsh \$remote_host pidwatch"
            ." --cd \$ENV{PWD} --host \$ENV{HOST} --pid \$\$"
            ."\$remote_command...");
+
+Another usage is as a "barrier" to start the new step in a script when
+another process completes.  Just use a sleep with a appropriate timeout
+value:
+
+    pidwatch --host HOST --pid PID sleep 9999999
+    echo PID has completed, do whatever is next
 
 =head1 ARGUMENTS
 
