@@ -91,7 +91,7 @@ if (my $pid = fork()) {  # Parent process, foreground job
     if ($rv != $pid) {
 	die "%Error: waitpid() returned $rv: $!";
     } elsif ($?) {
-	die "%Error: Child died with status $?,";
+	die "%Error: Child process died with status $?,";
     }
 
     print "Exec in $$\n" if $Debug;

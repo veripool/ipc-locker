@@ -29,6 +29,7 @@ install-here::
 ## Maintainer use:
 preexist:
 	test ! -r \$(HOME)/src/kits/\$(DISTVNAME).tar.gz
+	test -s README
 
 tag:
 	svnorcvs tag  \$(DISTNAME)_\$(VERSION_SYM)

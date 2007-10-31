@@ -8,6 +8,7 @@ lib/IPC/PidStat.pm
 lib/IPC/PidStat/PidServer.pm
 Makefile.PL
 MANIFEST
+MANIFEST.SKIP
 META.yml			Module meta-data (added by MakeMaker)
 nagios/check_lockerd
 nagios/check_pidstatd
