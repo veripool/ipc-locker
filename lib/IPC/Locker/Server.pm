@@ -79,11 +79,11 @@ require Exporter;
 use IPC::Locker;
 use Socket;
 use IO::Socket;
-use IO::Select;
+use IO::Poll qw(POLLIN POLLOUT POLLERR POLLHUP POLLNVAL);
 
 use IPC::PidStat;
 use strict;
-use vars qw($VERSION $Debug %Locks %Clients $Select $Interrupts $Hostname $Exister);
+use vars qw($VERSION $Debug %Locks %Clients $Poll $Interrupts $Hostname $Exister);
 use Carp;
 
 ######################################################################
@@ -144,10 +144,11 @@ sub start_server {
     } else {
     	die "IPC::Locker::Server:  What transport do you want to use?";
     }
-    $Select = new IO::Select( $server );
+    $Poll = IO::Poll->new();
+    $Poll->mask($server => (POLLIN | POLLERR | POLLHUP | POLLNVAL));
 
-    $Exister = new IPC::PidStat();
-    $Select->add($Exister->fh);
+    $Exister = IPC::PidStat->new();
+    $Poll->mask($Exister->fh => (POLLIN | POLLERR | POLLHUP | POLLNVAL));
 
     %Clients = ();
     my $timeout=2;
@@ -156,18 +157,21 @@ sub start_server {
     $SIG{HUP}= \&sig_INT;
     
     while (!$Interrupts) {
-    	my ($r, $w, $e, $fh, @a);
-	$r = $w = $e = 0;
-	print "Pre-Select $!\n" if $Debug;
+	print "Pre-Poll $!\n" if $Debug;
 	$! = 0;
-    	@a = IO::Select::select($Select, undef, $Select, $timeout); 
-	($r, $w, $e) = @a;
-	print "Select $#a $#$r $#$w $#$e $! \n" if $Debug;
-        foreach $fh (@$r) {
+	my (@r, @w, @e);
+    	my $npolled = $Poll->poll($timeout); 
+	if ($npolled>=0) {
+	    @r = $Poll->handles(POLLIN);
+	    @w = $Poll->handles(POLLOUT);
+	    @e = $Poll->handles(POLLERR | POLLHUP | POLLNVAL);
+	}
+	print "Poll $npolled : $#r $#w $#e $!\n" if $Debug;
+        foreach my $fh (@r) {
             if ($fh == $server) {
         	# Create a new socket
         	my $clientfh = $server->accept;
-        	$Select->add($clientfh);
+        	$Poll->mask($clientfh => (POLLIN | POLLERR | POLLHUP | POLLNVAL));
 		print $clientfh "HELLO\n" if $Debug;
 		#
 		my $clientvar = {socket=>$clientfh,
@@ -183,7 +187,7 @@ sub start_server {
 		if ($data eq '') {
         	    # we have finished with the socket
 		    delete $Clients{$fh};
-        	    $Select->remove($fh);
+        	    $Poll->remove($fh);
         	    $fh->close;
  		} else {
 		    my $line = $Clients{$fh}->{input}.$data;
@@ -201,10 +205,10 @@ sub start_server {
 		}
 	    }
 	}
-	foreach $fh (@$e) {
+	foreach my $fh (@e) {
 	    # we have finished with the socket
 	    delete $Clients{$fh};
-	    $Select->remove($fh);
+	    $Poll->remove($fh);
 	    $fh->close;
         }
 	recheck_locks();
@@ -218,6 +222,7 @@ sub start_server {
 	    $timeout = 2000;
 	}
     }
+    print "Loop end\n" if $Debug;
 }
 
 ######################################################################
@@ -263,7 +268,7 @@ sub client_close {
     my $clientvar = shift || die;
     if ($clientvar->{socket}) {
 	delete $Clients{$clientvar->{socket}};
-	$Select->remove($clientvar->{socket});
+	$Poll->remove($clientvar->{socket});
 	$clientvar->{socket}->close();
     }
     $clientvar->{socket} = undef;

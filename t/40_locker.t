@@ -23,6 +23,7 @@ END { kill 'TERM', $Serv_Pid; }
 
 use IPC::Locker;
 #$IPC::Locker::Debug=1;
+#$IPC::Locker::Server::Debug=1;
 ok(1);
 print "IPC::Locker VERSION $IPC::Locker::VERSION\n";
 

@@ -229,7 +229,7 @@ returned.
 
 Blocks waiting for any return from the server.  Returns undef if none is
 found, or a 2 element array with the PID and existence flag.  Generally
-this would be called inside a IO::Select loop.
+this would be called inside a IO::Poll loop.
 
 =back
 

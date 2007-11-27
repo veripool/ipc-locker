@@ -14,6 +14,7 @@
 #                                                                           
 ######################################################################
 
+use lib './blib/lib';        # testing
 use IO::Handle;
 use Getopt::Long;
 use Cwd qw();

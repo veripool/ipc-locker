@@ -62,7 +62,7 @@ while (1) {
 	exit(0);
     }
     waitpid($Pid,0) if $Pid;
-    warn "%Warning: Server aborted\n" if $Debug;
+    warn "%Warning: Server aborted, status=$?\n" if $Debug;
     sleep(1);
     kill 9, $Pid if $Pid;
     $Pid = 0;

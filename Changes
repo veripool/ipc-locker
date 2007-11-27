@@ -2,6 +2,10 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
+* IPC::Locker 1.47***
+
+****	Fix server to support over 1024 client connections.
+
 * IPC::Locker 1.472 7/16/2007
 
 ****	Fix locker test.  [cpan-testers]
