@@ -134,9 +134,24 @@ documentation.
 @item
 You may wish to install @samp{lockerd} and @samp{pidstatd} in a
 init.rc file so that it is run at system startup.  Depending on your
-distribution, you may be able to just copy the examples in
-init.d/lockerd to /etc/init.d, and type @samp{chkconfig pidstatd on}
-and @samp{chkconfig lockerd on}.
+distribution, you may be able to just:
+
+@samp{cp  init.d/lockerd   /etc/init.d/lockerd}  (On one server only)
+
+@samp{cp  init.d/pidstatd  /etc/init.d/pidstatd} (On all machines)
+
+Edit paths in above to point to /usr/bin instead of /usr/local/bin, if needed.
+
+@samp{/etc/init.d/lockerd start}  (On one server only)
+
+@samp{/etc/init.d/pidstatd start} (On all machines)
+
+@samp{chkconfig lockerd on}  (On one server only)
+
+@samp{chkconfig pidstatd on} (On all machines)
+
+If you get "This account is currently not available."  you need to
+change the daemon account from a shell of /sbin/nologin to /sbin/bash.
 
 @item
 If you are using Nagios (@url{http://www.nagios.org}), sample scripts

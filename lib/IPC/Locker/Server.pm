@@ -522,7 +522,7 @@ sub recheck_locks {
 		if ((($locki->{autounlock_check_time}||0) + 2) < $time) {
 		    $locki->{autounlock_check_time} = $time;
 		    # Only check every 2 secs or so, else we can spend more time
-		    # doing the OS calls then it's worth
+		    # doing the OS calls than it's worth
 		    my $dead = undef;
 		    if ($locki->{hostname} eq $Hostname) {	# lock owner is running on same host
 			$dead = IPC::PidStat::local_pid_doesnt_exist($locki->{pid});

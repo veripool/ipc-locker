@@ -513,7 +513,7 @@ sub _request {
     # Note above break_lock also has prologue close
     $fh->close();
 
-    $@ = $preerror || $@;  # User's error is more important then any we make
+    $@ = $preerror || $@;  # User's error is more important than any we make
 }
 
 ######################################################################

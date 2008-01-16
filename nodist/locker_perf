@@ -1,0 +1,212 @@
+#!/usr/bin/perl -w
+# $Id$
+# See copyright, etc in below POD section.
+######################################################################
+BEGIN {
+    use lib "/tmp/build-ice9/site_perl";   # Blizzard
+}
+
+require 5.006_001;
+use Getopt::Long;
+#use Data::Dumper; $Data::Dumper::Indent=1; #Debug
+use IPC::Locker;
+use Pod::Usage;
+use Time::HiRes;
+use Sys::Hostname;
+use strict;
+use vars qw ($Debug);
+
+#======================================================================
+
+our $Opt_Host = $ENV{IPCLOCKER_HOST};
+our $Opt_PerSec = 1;
+our $Opt_Runtime   = 10;
+our $Opt_StartMinute;
+our $Opt_Comment = "";
+our $Opt_MaxReq;
+
+#======================================================================
+# main
+
+autoflush STDOUT 1;
+autoflush STDERR 1;
+Getopt::Long::config ("no_auto_abbrev");
+if (! GetOptions (
+		  "help"	=> \&usage,
+		  "debug"	=> sub { $Debug=1; $IPC::Locker::Debug = 1;},
+		  "<>"		=> \&parameter,
+		  "host=s"	=> \$Opt_Host,
+		  "persec=i"	=> \$Opt_PerSec,
+		  "runtime=i"	=> \$Opt_Runtime,
+		  "maxreq=i"	=> \$Opt_MaxReq,
+		  "startminute=i"	=> \$Opt_StartMinute,
+		  "comment=s"	=> \$Opt_Comment,
+		  )) {
+    die "%Error: Bad usage, try 'locker_perf --help'\n";
+}
+
+srand();
+if (defined $Opt_StartMinute) {
+    while (1) {
+	my ($sec,$min,$hour) = localtime();
+	last if $min == $Opt_StartMinute;
+    }
+}
+
+Time::HiRes::usleep (rand() * 1e6);
+print "Start\n" if $Debug;
+perf();
+print "End\n" if $Debug;
+
+#----------------------------------------------------------------------
+
+sub usage {
+    print '$Id$ ', "\n";
+    pod2usage(-verbose=>2, -exitval => 2);
+    exit (1);
+}
+
+sub parameter {
+    my $param = shift;
+    die "%Error: Unknown parameter: $param\n";
+}
+
+#######################################################################
+
+sub perf {
+    my $st_time = fractime();
+
+    my $reqs = 0;
+    my $rtns = 0;
+    my $tooslow;
+    my $latency = 0;
+
+    for (my $loops = 0; $loops < $Opt_Runtime; $loops++) {
+	last if $Opt_MaxReq && $reqs > $Opt_MaxReq;
+	print "  Second loop\n" if $Debug;
+
+	for (my $persec=0; $persec < $Opt_PerSec; $persec++) {
+	    last if $Opt_MaxReq && $reqs > $Opt_MaxReq;
+	    my $loop_start = fractime();
+
+	    my $lock = IPC::Locker->new (host=>$Opt_Host,
+					 lock=>"TEMP_".hostname());
+	    $lock->lock;
+	    $latency += fractime() - $loop_start;
+
+	    $reqs++;
+	
+	    my $mid_sleep = ((1/$Opt_PerSec) * rand());
+	    Time::HiRes::usleep ($mid_sleep * 1e6) if $mid_sleep > 0;
+
+	    {
+		my $ul_start = fractime();
+		$lock->unlock;
+		$lock = undef;
+		$latency += fractime() - $ul_start;
+	    }
+
+	    my $loop_end = fractime();
+	    my $sec_sleep = ((1/$Opt_PerSec) - ($loop_end-$loop_start));
+	    print "SS $sec_sleep\n" if $Debug;
+	    Time::HiRes::usleep ($sec_sleep * 1e6) if $sec_sleep > 0;
+	    $tooslow = 1 if $sec_sleep < 0;
+	}
+    }
+
+    my $delta_time = fractime() - $st_time;
+
+    my $note = "";
+    $note = "May have had too much backpressure" if $tooslow;
+    printf "%s, %5.3f, %5.3f, %s, %s\n", '"'.hostname().'"', $reqs/$delta_time, $latency/$reqs, '"'.$Opt_Comment.'"', '"'.$note.'"';
+}
+
+sub fractime {
+    my ($time, $time_usec) = Time::HiRes::gettimeofday();
+    return $time + $time_usec * 1e-6;
+}
+
+#######################################################################
+__END__
+
+=pod
+
+=head1 NAME
+
+locker_perf -
+
+=head1 SYNOPSIS
+
+cd /tmp
+salloc -p scx-comp -N 10 bash
+sbcast -f ~/SandBox/homecvs/perltools/IPC-Locker/nodist/locker_perf /tmp/locker_perf 
+date
+echo "---" >> ~/d/perfbliz
+srun /tmp/locker_perf --host 10.4.0.28 --comment 10 --startminute 47 | tee -a ~/d/perfbliz
+echo "---" >> ~/d/perfbliz
+srun /tmp/locker_perf --host 10.4.0.28 --comment 800 --persec 25 --startminute 44 | tee -a ~/d/perfbliz
+
+=head1 DESCRIPTION
+
+dd
+
+=head1 ARGUMENTS
+
+=over 4
+
+=item --comment
+
+Arbitrary string to add to output; generally the number of CPUs or other
+slurm characteristic.
+
+=item --help
+
+Displays this message and program version and exits.
+
+=item --host
+
+Hostname to ping.
+
+=item --persec
+
+Requests per second to launch.
+
+=item --pid
+
+PID to ping.
+
+=item --runtime
+
+Number of seconds to run for.
+
+=item --startminute
+
+Minute-hand time to start at, to insure all jobs are simultanious.
+
+=back
+
+=head1 DISTRIBUTION
+
+This is part of the L<http://www.veripool.com/> free Verilog EDA software
+tool suite.  The latest version is available from CPAN and from
+L<http://www.veripool.com/>.
+
+Copyright 2008-2008 by Wilson Snyder.  This package is free software; you
+can redistribute it and/or modify it under the terms of either the GNU
+Lesser General Public License or the Perl Artistic License.
+
+Unpublished Work Copyright 2008-2008 Wilson Snyder <wsnyder@wsnyder.org>
+All Rights Reserved.
+
+=head1 AUTHORS
+
+Wilson Snyder <wsnyder@wsnyder.org>
+
+=head1 SEE ALSO
+
+=cut
+
+######################################################################
+### Local Variables:
+### compile-command: "./locker_perf "
+### End:

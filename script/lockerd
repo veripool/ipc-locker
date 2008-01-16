@@ -37,6 +37,7 @@ use vars qw($Pid);
 
 my $Debug = 0;
 my %server_params = ();
+my $opt_fork = 1;
 
 if (!GetOptions (
 		 "help"		=> \&usage,
@@ -45,6 +46,7 @@ if (!GetOptions (
 		 "port=i"	=> sub {$server_params{port} = $_[1];},
 		 "path=s"	=> sub {$server_params{port} = $_[1];
     	    	    		        $server_params{family}='UNIX';},
+		 "fork!"	=> \$opt_fork,
 		 )) {
     die "%Error: Bad usage, try 'lockerd --help'\n";
 }
@@ -57,7 +59,8 @@ $SIG{HUP}  = \&sig_HUP;
 $SIG{CHLD} = \&sig_HUP;
 while (1) {
     print "Starting server\n" if $Debug;
-    unless ($Pid = fork) {
+    $Pid = fork if $opt_fork;
+    unless ($Pid) {
         IPC::Locker::Server->new(%server_params)->start_server ();
 	exit(0);
     }
@@ -125,6 +128,10 @@ IPC::Locker package.
 =item --help
 
 Displays this message and program version and exits.
+
+=item --nofork
+
+Keep the daemon in the foreground for debugging.
 
 =item --port
 
