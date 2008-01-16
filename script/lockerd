@@ -148,6 +148,11 @@ Displays program version and exits.
 
 =back
 
+=head1 PERFORMANCE
+
+Lockerd has tested to perform well handling above 3,000 lock or unlock
+requests per second on a 2GHz AMD Operton server.
+
 =head1 DISTRIBUTION
 
 The latest version is available from CPAN and from L<http://www.veripool.com/>.

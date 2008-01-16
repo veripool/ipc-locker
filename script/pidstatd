@@ -169,8 +169,8 @@ Displays program version and exits.
 
 As pidstatd is a UDP daemon, some requests may be dropped by the operating
 system, but this assists in graceful degradation under heavy loads.
-Pidstatd has been tested to perform well to above 13,000 requests per
-second on a 2GHz AMD Operton server.
+Pidstatd has been tested to perform well handling to above 13,000 requests
+per second on a 2GHz AMD Operton server.
 
 =head1 DISTRIBUTION
 

@@ -84,10 +84,10 @@ Remove current locker for the given lock.
 
 =item owner ([parameter=>value ...]);
 
-Returns a string of who has the lock or undef if not currently .  Note that
-this information is not atomic, and may change asynchronously; do not use
-this to tell if the lock will be available, to do that, try to obtain the
-lock and then release it if you got it.
+Returns a string of who has the lock or undef if not currently locked.
+Note that this information is not atomic, and may change asynchronously; do
+not use this to tell if the lock will be available, to do that, try to
+obtain the lock and then release it if you got it.
 
 =back
 
@@ -428,14 +428,16 @@ sub _request {
     # if the feature is on.  This allows for newer clients that don't
     # need to the new feature to still talk to older servers.
     my $req = ("user $self->{user}\n"
-	       ."locks ".join(' ',@{_array_or_one($self->{lock})})."\n"
-	       ."block ".($self->{block}||0)."\n"
-	       ."timeout ".($self->{timeout}||0)."\n");
+	       ."locks ".join(' ',@{_array_or_one($self->{lock})})."\n");
+    $req.=    ("block ".($self->{block}||0)."\n"
+	       ."timeout ".($self->{timeout}||0)."\n") if $cmd ne 'UNLOCK';
     $req.=    ("autounlock ".($self->{autounlock}||0)."\n"
 	       ."pid ".($self->{pid}||$$)."\n"
 	       ."hostname ".($self->{hostname})."\n"
-	       ) if $self->{autounlock};
-    $req.=    ("$cmd\n");
+	       ) if $self->{autounlock} && $cmd ne 'UNLOCK';
+    $req.=    ("$cmd\n"
+	       ."\n"  # End of group.  Some day we may not always send EOF immediately
+	       ."EOF\n");
     print "REQ ",join("\nR   ",split(/\n/,$req)),"\n" if $Debug;
 
     my $fh;
@@ -478,7 +480,7 @@ sub _request {
     
     $self->{lock_list} = [];
 
-    print $fh "$req\nEOF\n";
+    print $fh "$req\n";
     while (defined (my $line = <$fh>)) {
 	chomp $line;
 	next if $line =~ /^\s*$/;
@@ -514,6 +516,7 @@ sub _request {
     }
     # Note above break_lock also has prologue close
     $fh->close();
+    print "DONE\n" if $Debug;
 
     $@ = $preerror || $@;  # User's error is more important than any we make
 }

@@ -23,6 +23,7 @@ our $Opt_Runtime   = 10;
 our $Opt_StartMinute;
 our $Opt_Comment = "";
 our $Opt_MaxReq;
+our $Opt_HoldLocks = 1;
 
 #======================================================================
 # main
@@ -39,6 +40,7 @@ if (! GetOptions (
 		  "runtime=i"	=> \$Opt_Runtime,
 		  "maxreq=i"	=> \$Opt_MaxReq,
 		  "startminute=i"	=> \$Opt_StartMinute,
+		  "holdlocks=i"	=> \$Opt_HoldLocks,
 		  "comment=s"	=> \$Opt_Comment,
 		  )) {
     die "%Error: Bad usage, try 'locker_perf --help'\n";
@@ -79,25 +81,30 @@ sub perf {
     my $rtns = 0;
     my $tooslow;
     my $latency = 0;
+    my $lnum = 0;
 
+    my @locks;
     for (my $loops = 0; $loops < $Opt_Runtime; $loops++) {
 	last if $Opt_MaxReq && $reqs > $Opt_MaxReq;
 	print "  Second loop\n" if $Debug;
-
-	my $lock;
 
 	for (my $persec=0; $persec < $Opt_PerSec; $persec++) {
 	    last if $Opt_MaxReq && $reqs > $Opt_MaxReq;
 	    my $loop_start = fractime();
 	    {
-		if ($lock) {
+		if ($#locks >= $Opt_HoldLocks) {
+		    my $lock = shift @locks;
 		    $lock->unlock;
 		    $lock = undef;
 		}
-		$lock = IPC::Locker->new (host=>$Opt_Host,
-					  lock=>"TEMP_".hostname());
-		$lock->lock;
-		$reqs++;
+		{
+		    my $lock = IPC::Locker->new (host=>$Opt_Host,
+						 lock=>"TEMP_".hostname()."_".$lnum++,
+						 autounlock=>1,);
+		    $lock->lock;
+		    $reqs++;
+		    push @locks, $lock;
+		}
 		# Hold the lock through the following sleep,
 		# then release it at the top of the next loop.
 	    }
@@ -115,11 +122,12 @@ sub perf {
 
     my $note = "";
     $note = "May have had too much backpressure" if $tooslow;
-    printf "%s, %5.3f, %5.6f, %5.3f, %s, %s\n"
+    printf "%s, %5.3f, %5.6f, %5.3f, %d, %s, %s\n"
 	, '"'.hostname().'"'
 	, $reqs/$delta_time
 	, $latency/$reqs
 	, $delta_time
+	, ($#locks+1)
 	, '"'.$Opt_Comment.'"'
 	, '"'.$note.'"';
 }
