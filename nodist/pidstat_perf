@@ -2,9 +2,8 @@
 # $Id$
 # See copyright, etc in below POD section.
 ######################################################################
-BEGIN {
-    use lib "/tmp/build-ice9/site_perl";   # Blizzard
-}
+use lib './blib/lib';	# testing
+use lib "/tmp/build-ice9/site_perl";   # Blizzard
 
 require 5.006_001;
 use Getopt::Long;
@@ -94,13 +93,13 @@ sub perf {
 
 	    $exister->pid_request(host=>$Opt_Host, pid=>$Opt_Pid);
 	    $reqs++;
-	
+
 	    my $traffic = 1;
 	    while ($traffic) {
 		$traffic = 0;
 
 		$! = 0;
-		my $npolled = $poll->poll(0.01); 
+		my $npolled = $poll->poll(0.01);
 		if ($npolled>=0) {
 		    my @r = $poll->handles(POLLIN);
 		    if ($r[0]) {
@@ -146,7 +145,7 @@ pidstat_perf -
 
 cd /tmp
 salloc -p scx-comp -N 100 bash
-sbcast -f ~/SandBox/homecvs/perltools/IPC-Locker/nodist/pidstat_perf /tmp/pidstat_perf 
+sbcast -f ~/SandBox/homecvs/perltools/IPC-Locker/nodist/pidstat_perf /tmp/pidstat_perf
 date
 echo "---" >> ~/d/perfbliz
 srun /tmp/pidstat_perf --host 10.4.0.28 --comment 800 --startminute 47 >> ~/d/perfbliz

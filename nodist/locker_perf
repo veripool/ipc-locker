@@ -2,9 +2,8 @@
 # $Id$
 # See copyright, etc in below POD section.
 ######################################################################
-BEGIN {
-    use lib "/tmp/build-ice9/site_perl";   # Blizzard
-}
+use lib './blib/lib';	# testing
+use lib "/tmp/build-ice9/site_perl";   # Blizzard
 
 require 5.006_001;
 use Getopt::Long;
@@ -85,29 +84,27 @@ sub perf {
 	last if $Opt_MaxReq && $reqs > $Opt_MaxReq;
 	print "  Second loop\n" if $Debug;
 
+	my $lock;
+
 	for (my $persec=0; $persec < $Opt_PerSec; $persec++) {
 	    last if $Opt_MaxReq && $reqs > $Opt_MaxReq;
 	    my $loop_start = fractime();
-
-	    my $lock = IPC::Locker->new (host=>$Opt_Host,
-					 lock=>"TEMP_".hostname());
-	    $lock->lock;
-	    $latency += fractime() - $loop_start;
-
-	    $reqs++;
-	
-	    my $mid_sleep = ((1/$Opt_PerSec) * rand());
-	    Time::HiRes::usleep ($mid_sleep * 1e6) if $mid_sleep > 0;
-
 	    {
-		my $ul_start = fractime();
-		$lock->unlock;
-		$lock = undef;
-		$latency += fractime() - $ul_start;
+		if ($lock) {
+		    $lock->unlock;
+		    $lock = undef;
+		}
+		$lock = IPC::Locker->new (host=>$Opt_Host,
+					  lock=>"TEMP_".hostname());
+		$lock->lock;
+		$reqs++;
+		# Hold the lock through the following sleep,
+		# then release it at the top of the next loop.
 	    }
+	    my $req_lat = fractime() - $loop_start;
+	    $latency += $req_lat;
 
-	    my $loop_end = fractime();
-	    my $sec_sleep = ((1/$Opt_PerSec) - ($loop_end-$loop_start));
+	    my $sec_sleep = ((1/$Opt_PerSec) - $req_lat);
 	    print "SS $sec_sleep\n" if $Debug;
 	    Time::HiRes::usleep ($sec_sleep * 1e6) if $sec_sleep > 0;
 	    $tooslow = 1 if $sec_sleep < 0;
@@ -118,7 +115,13 @@ sub perf {
 
     my $note = "";
     $note = "May have had too much backpressure" if $tooslow;
-    printf "%s, %5.3f, %5.3f, %s, %s\n", '"'.hostname().'"', $reqs/$delta_time, $latency/$reqs, '"'.$Opt_Comment.'"', '"'.$note.'"';
+    printf "%s, %5.3f, %5.6f, %5.3f, %s, %s\n"
+	, '"'.hostname().'"'
+	, $reqs/$delta_time
+	, $latency/$reqs
+	, $delta_time
+	, '"'.$Opt_Comment.'"'
+	, '"'.$note.'"';
 }
 
 sub fractime {
@@ -139,7 +142,7 @@ locker_perf -
 
 cd /tmp
 salloc -p scx-comp -N 10 bash
-sbcast -f ~/SandBox/homecvs/perltools/IPC-Locker/nodist/locker_perf /tmp/locker_perf 
+sbcast -f ~/SandBox/homecvs/perltools/IPC-Locker/nodist/locker_perf /tmp/locker_perf
 date
 echo "---" >> ~/d/perfbliz
 srun /tmp/locker_perf --host 10.4.0.28 --comment 10 --startminute 47 | tee -a ~/d/perfbliz

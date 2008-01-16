@@ -294,9 +294,11 @@ sub new {
 ######################################################################
 #### Static Accessors
 
+our $_Hostfqdn;
 sub hostfqdn {
     # Return hostname() including domain name
-    return Net::Domain::hostfqdn();
+    $_Hostfqdn = Net::Domain::hostfqdn() if !defined $_Hostfqdn;
+    return $_Hostfqdn;
 }
 
 ######################################################################
@@ -434,7 +436,7 @@ sub _request {
 	       ."hostname ".($self->{hostname})."\n"
 	       ) if $self->{autounlock};
     $req.=    ("$cmd\n");
-    print "REQ $req\n" if $Debug;
+    print "REQ ",join("\nR   ",split(/\n/,$req)),"\n" if $Debug;
 
     my $fh;
     if ($self->{family} eq 'INET'){
@@ -444,7 +446,7 @@ sub _request {
 
 	foreach my $host (@hostlist) {
 	    print "Trying host $host\n" if $Debug;
-	    $fh = IO::Socket::INET->new( Proto     => "tcp",
+	    $fh = IO::Socket::INET->new( Proto     => _tcp_proto(),
 					 PeerAddr  => $host,
 					 PeerPort  => $self->{port},
 					 );
@@ -517,6 +519,17 @@ sub _request {
 }
 
 ######################################################################
+
+our $_Tcp_Proto;
+sub _tcp_proto {
+    # We don't want creating a socket to have to keep reading /etc/services
+    # One would have thought IO::Socket etc kept this for us...
+    if (!defined $_Tcp_Proto) {
+	$_Tcp_Proto = getprotobyname("tcp")
+	    or die "Could not determine the protocol number for tcp";
+    }
+    return $_Tcp_Proto;
+}
 
 sub _array_or_one {
     return [$_[0]] if !ref $_[0];

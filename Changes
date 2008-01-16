@@ -6,6 +6,8 @@ The contributors that suggested a given feature are shown in [].
 
 ****	Fix server to support over 1024 client connections.
 
+****	Lockerd performance enhancements to support > 1000 requests/second.
+
 * IPC::Locker 1.472 7/16/2007
 
 ****	Fix locker test.  [cpan-testers]

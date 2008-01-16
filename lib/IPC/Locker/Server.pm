@@ -148,7 +148,8 @@ sub start_server {
     $Poll->mask($server => (POLLIN | POLLERR | POLLHUP | POLLNVAL));
 
     $Exister = IPC::PidStat->new();
-    $Poll->mask($Exister->fh => (POLLIN | POLLERR | POLLHUP | POLLNVAL));
+    my $exister_fh = $Exister->fh;  # Avoid method calls, to accelerate things
+    $Poll->mask($exister_fh => (POLLIN | POLLERR | POLLHUP | POLLNVAL));
 
     %Clients = ();
     my $timeout=2;
@@ -161,10 +162,10 @@ sub start_server {
 	$! = 0;
 	my (@r, @w, @e);
     	my $npolled = $Poll->poll($timeout); 
-	if ($npolled>=0) {
+	if ($npolled>0) {
 	    @r = $Poll->handles(POLLIN);
-	    @w = $Poll->handles(POLLOUT);
 	    @e = $Poll->handles(POLLERR | POLLHUP | POLLNVAL);
+	    #@w = $Poll->handles(POLLOUT);
 	}
 	print "Poll $npolled : $#r $#w $#e $!\n" if $Debug;
         foreach my $fh (@r) {
@@ -175,11 +176,10 @@ sub start_server {
 		print $clientfh "HELLO\n" if $Debug;
 		#
 		my $clientvar = {socket=>$clientfh,
-				 delayed=>0,
 				 input=>'',
 			     };
 		$Clients{$clientfh}=$clientvar;
-	    } elsif ($fh == $Exister->fh) {
+	    } elsif ($fh == $exister_fh) {
 		exist_traffic();
 	    } else {
 		my $data = '';
@@ -199,8 +199,7 @@ sub start_server {
 		    	$Clients{$fh}->{input}=pop @lines;
 			print "Left: ".$Clients{$fh}->{input}."\n" if $Debug;
 		    }
-		    push(@{$Clients{$fh}->{inputlines}}, @lines);
-		    client_service($Clients{$fh});
+		    client_service($Clients{$fh}, \@lines);
 		    recheck_locks();
 		}
 	    }
@@ -214,7 +213,7 @@ sub start_server {
 	recheck_locks();
 	foreach my $cl (values %Clients) {
 	    if ($cl->{locked}){
-	    	client_service ($cl);
+	    	client_service ($cl, []);
 	    }
 	}
 	$timeout = alarm_time();
@@ -232,35 +231,51 @@ sub start_server {
 sub client_service {
     # Loop getting commands from a specific client
     my $clientvar = shift || die;
+    my $linesref = shift;
     
-    my $line;
-    
-    while (defined($line = shift @{$clientvar->{inputlines}})) {
-	chomp $line;
+    foreach my $line (@{$linesref}) {
 	print "REQ $line\n" if $Debug;
-	$clientvar->{user} = $1 if ($line =~ /^user\s+(\S*)$/m);
-	$clientvar->{locks} = [split(/\s/,"$1 ")] if ($line =~ /^locks?\s+([^\n]*)$/m);
-	$clientvar->{block} = $1 if ($line =~ /^block\s+(\S*)$/m);
-	$clientvar->{timeout} = $1 if ($line =~ /^timeout\s+(\S*)$/m);
-	$clientvar->{autounlock} = $1 if ($line =~ /^autounlock\s+(\S*)$/m);
-	$clientvar->{hostname} = $1 if ($line =~ /^hostname\s+(\S*)$/m);
-	$clientvar->{pid} = $1 if ($line =~ /^pid\s+(\S*)$/m);
+	my ($cmd,@param) = split /\s+/, $line;  # We rely on the newline to terminate the split
+	if ($cmd) {
+	    # Variables
+	    if ($cmd eq 'user') {		$clientvar->{user} = $param[0]; }
+	    elsif ($cmd eq 'locks') {		$clientvar->{locks} = [@param]; }
+	    elsif ($cmd eq 'block') {		$clientvar->{block} = $param[0]; }
+	    elsif ($cmd eq 'timeout') {		$clientvar->{timeout} = $param[0]; }
+	    elsif ($cmd eq 'autounlock') {	$clientvar->{autounlock} = $param[0]; }
+	    elsif ($cmd eq 'hostname') {	$clientvar->{hostname} = $param[0]; }
+	    elsif ($cmd eq 'pid') {		$clientvar->{pid} = $param[0]; }
+
+	    # Frequent Commands
+	    elsif ($cmd eq 'UNLOCK') {
+		client_unlock ($clientvar);
+	    }
+	    elsif ($cmd eq 'LOCK') {
+		my $wait = client_lock ($clientvar);
+		print "Wait= $wait\n" if $Debug;
+		last if $wait;
+	    }
+	    elsif ($cmd eq 'EOF') {
+		client_close ($clientvar);
+		undef $clientvar;
+		last; 
+	    }
+
+	    # Infrequent commands
+	    elsif ($cmd eq 'STATUS') {
+		client_status ($clientvar);
+	    }
+	    elsif ($cmd eq 'BREAK_LOCK') {
+		client_break  ($clientvar);
+	    }
+	    elsif ($cmd eq 'LOCK_LIST') {
+		client_lock_list ($clientvar);
+	    }
+	    elsif ($cmd eq 'RESTART') {
+		die "restart";
+	    }
+	}
 	# Commands
-	client_unlock ($clientvar) if ($line =~ /^UNLOCK$/m);
-	client_status ($clientvar) if ($line =~ /^STATUS$/m);
-	client_break  ($clientvar) if ($line =~ /^BREAK_LOCK$/m);
-	client_lock_list ($clientvar) if ($line =~ /^LOCK_LIST$/m);
-	die "restart"              if ($line =~ /^RESTART$/m);
-	if ($line =~ /^LOCK$/m) {
-	    my $wait = client_lock ($clientvar);
-	    print "Wait= $wait\n" if $Debug;
-	    last if $wait;
-	}
-	if ($line =~ /^EOF$/m) {
-	    client_close ($clientvar);
-	    undef $clientvar;
-	    last; 
-	}
     }
 }
 
@@ -281,6 +296,7 @@ sub client_status {
     @totry = @{$clientvar->{locks}} if !defined $clientvar->{lock};
     $clientvar->{locked} = 0;
     $clientvar->{owner} = "";
+    my $send = "";
     foreach my $lockname (@totry) {
 	my $locki = locki_lookup ($lockname);
 	$clientvar->{locked} = ($locki->{owner} eq $clientvar->{user})?1:0;
@@ -288,15 +304,17 @@ sub client_status {
 	$clientvar->{lock} = $locki->{lock};
 	if ($clientvar->{locked} && $clientvar->{told_locked}) {
 	    $clientvar->{told_locked} = 0;
-	    client_send ($clientvar, "print_obtained\n");
+	    $send .= "print_obtained\n";
 	}
 	last if $clientvar->{locked};
     }
-    client_send ($clientvar, "owner $clientvar->{owner}\n");
-    client_send ($clientvar, "locked $clientvar->{locked}\n");
-    client_send ($clientvar, "lockname $clientvar->{lock}\n") if $clientvar->{locked};
-    client_send ($clientvar, "error $clientvar->{error}\n") if $clientvar->{error};
-    return client_send ($clientvar, "\n\n");
+
+    $send .= "owner $clientvar->{owner}\n";
+    $send .= "locked $clientvar->{locked}\n";
+    $send .= "lockname $clientvar->{lock}\n" if $clientvar->{locked};
+    $send .= "error $clientvar->{error}\n" if $clientvar->{error};
+    $send .= "\n\n";
+    return client_send ($clientvar, $send);
 }
 
 sub client_lock_list {
