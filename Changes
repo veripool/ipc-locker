@@ -6,7 +6,7 @@ The contributors that suggested a given feature are shown in [].
 
 ****	Added return type suppression to IPC::PidStat::pid_request.
 
-****	Fix server to support over 1024 client connections.
+****	Fix server to support over 1024 client connections.  [Bryce Denney]
 
 ****	Lockerd performance enhancements to support > 3000 requests/second.
 

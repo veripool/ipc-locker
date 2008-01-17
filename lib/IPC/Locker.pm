@@ -335,8 +335,10 @@ sub ping_status {
 sub lock {
     my $self = shift;
     $self = $self->new(@_) if (!ref($self));
-    $self->_request("LOCK");
-    croak $self->{error} if $self->{error};
+    if (!$self->locked) {
+	$self->_request("LOCK");
+	croak $self->{error} if $self->{error};
+    }
     return ($self) if $self->{locked};
     return undef;
 }
@@ -353,9 +355,10 @@ sub DESTROY () {
 
 sub unlock {
     my $self = shift; ($self && ref($self)) or croak 'usage: $self->unlock()';
-    return if (!$self->{locked});
-    $self->_request("UNLOCK");
-    croak $self->{error} if $self->{error};
+    if ($self->locked) {
+	$self->_request("UNLOCK");
+	croak $self->{error} if $self->{error};
+    }
     return ($self);
 }
 

@@ -13,7 +13,7 @@ use Test;
 use strict;
 use vars qw (%SLArgs $Serv_Pid);
 
-BEGIN { plan tests => 17 }
+BEGIN { plan tests => 23 }
 BEGIN { require "t/test_utils.pl"; }
 
 END { kill 'TERM', $Serv_Pid; }
@@ -62,6 +62,10 @@ ok ($lock->locked());
 # Lock owner
 ok ($lock->owner());
 
+# Lock obtain again, should still be locked
+ok ($lock->lock());
+ok ($lock->locked());
+
 # Lock list
 my @list = $lock->lock_list();
 ok ($#list==1 && $list[0] eq 'lock' && $list[1]);
@@ -89,8 +93,23 @@ ok (($lock2 && $lock2->locked()
 ok (!defined( IPC::Locker->lock(%SLArgs, block=>0, user=>'alt3',
 				lock=>[qw(lock lock2)],) ));
 
+# Get the lock under same owner, should "inherit" lock2's lock
+my $lock3 =  new IPC::Locker(%SLArgs,
+			     timeout=>10,
+			     lock=>[qw(lock lock2)],
+			     autounlock=>1,
+			     user=>'alt2',
+			     );
+$lock3->lock();
+ok ($lock3->lock());
+
 # Lock release
 ok ($lock->unlock());
+ok (!$lock->locked());
+
+# Lock release again, still unlocked
+ok ($lock->unlock());
+ok (!$lock->locked());
 
 # Ping
 ok ($lock->ping());

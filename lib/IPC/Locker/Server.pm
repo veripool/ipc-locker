@@ -341,7 +341,8 @@ sub client_lock {
     # Fast case, see if there are any non-allocated locks
     foreach my $lockname (@{$clientvar->{locks}}) {
 	_timelog("c$clientvar->{client_num}: check $lockname\n") if $Debug;
-	if (my $locki = locki_find ($lockname)) {
+	my $locki = locki_find ($lockname);
+	if ($locki && $locki->{owner} ne $clientvar->{user}) {
 	    # See if the user's machine can clear it
 	    if ($locki->{autounlock} && $clientvar->{autounlock}) {
 		client_send ($clientvar, "autounlock_check $locki->{lock} $locki->{hostname} $locki->{pid}\n");
@@ -434,13 +435,13 @@ sub client_send {
 
     my $clientfh = $clientvar->{socket};
     return 0 if (!$clientfh);
-    _timelog_split("c$clientvar->{client_num}: RESP $clientfh\n",
-		   "\nc$clientvar->{client_num}: RES  ", $msg) if $Debug;
+    _timelog_split("c$clientvar->{client_num}: RESP $clientfh",
+		   (' 'x24)."c$clientvar->{client_num}: RES  ", $msg) if $Debug;
 
     $SIG{PIPE} = 'IGNORE';
-    my $status = eval { send $clientfh,$msg,0; };
+    my $status = eval { local $^W=0; send $clientfh,$msg,0; };  # Disable warnings
     if (!$status) {
-	warn "client_send hangup $? $! $status $clientfh " if $Debug;
+	warn "client_send hangup $? $! ".($status||"")." $clientfh " if $Debug;
 	client_close ($clientvar);
 	return 0;
     }
@@ -512,38 +513,46 @@ sub locki_lock {
     _timelog("$locki->{lock}: Locki_lock:Waiter count: ".$#{$locki->{waiters}}."\n") if $Debug;
     while (my $clientvar = shift @{$locki->{waiters}}) {
     	_timelog("$locki->{lock}: Locki_lock:Shift count: ".$#{$locki->{waiters}}."\n") if $Debug;
-	$locki->{locked} = 1;
-	$locki->{owner} = $clientvar->{user};
-	if ($clientvar->{timeout}) {
-	    $locki->{timelimit} = $clientvar->{timeout} + fractime();
-	} else {
-	    $locki->{timelimit} = 0;
-	}
-	$locki->{autounlock} = $clientvar->{autounlock};
-	$locki->{hostname} = $clientvar->{hostname};
-	$locki->{pid} = $clientvar->{pid};
-	_timelog("$locki->{lock}: Issuing to $locki->{owner}\n") if $Debug;
-	if ($clientvar->{locked} && $clientvar->{locks}[0] ne $locki->{lock}) {
-	    # Client gave a choice of locks, and another one got to
-	    # satisify it first
-	    _timelog("$locki->{lock}: Already has different lock\n") if $Debug;
-	    return locki_unlock ($locki); # locki_unlock may recurse to call locki_lock
-	}
-	else {
-	    # This is the only call to a client_ routine not in the direct
-	    # client call stack.  Thus we may need to process more commands
-	    # after this call
-	    if (client_status ($clientvar)) {   # sets clientvar->{locked}
-		# Worked ok
-		client_service($clientvar, []);  # If any queued, handle more commands/ EOF
-		last; # Don't look for another lock waiter
-	    }
-	    # Else hung up, didn't get the lock, give to next guy
-	    _timelog("$locki->{lock}: Owner hangup $locki->{owner}\n") if $Debug;
-	    return locki_unlock ($locki); # locki_unlock may recurse to call locki_lock
-	}
-	die "%Error: Can't get here - instead we recurse thru unlock\n";
+	locki_lock_to_client($locki,$clientvar);
     }
+}
+
+sub locki_lock_to_client {
+    my $locki = shift;
+    my $clientvar = shift;
+
+    _timelog("$locki->{lock}: Issuing to $clientvar->{user}\n") if $Debug;
+    $locki->{locked} = 1;
+    $locki->{owner} = $clientvar->{user};
+    if ($clientvar->{timeout}) {
+	$locki->{timelimit} = $clientvar->{timeout} + fractime();
+    } else {
+	$locki->{timelimit} = 0;
+    }
+    $locki->{autounlock} = $clientvar->{autounlock};
+    $locki->{hostname} = $clientvar->{hostname};
+    $locki->{pid} = $clientvar->{pid};
+
+    if ($clientvar->{locked} && $clientvar->{locks}[0] ne $locki->{lock}) {
+	# Client gave a choice of locks, and another one got to
+	# satisify it first
+	_timelog("$locki->{lock}: Already has different lock\n") if $Debug;
+	return locki_unlock ($locki); # locki_unlock may recurse to call locki_lock
+    }
+    else {
+	# This is the only call to a client_ routine not in the direct
+	# client call stack.  Thus we may need to process more commands
+	# after this call
+	if (client_status ($clientvar)) {   # sets clientvar->{locked}
+	    # Worked ok
+	    client_service($clientvar, []);  # If any queued, handle more commands/ EOF
+	    return; # Don't look for another lock waiter
+	}
+	# Else hung up, didn't get the lock, give to next guy
+	_timelog("$locki->{lock}: Owner hangup $locki->{owner}\n") if $Debug;
+	return locki_unlock ($locki); # locki_unlock may recurse to call locki_lock
+    }
+    die "%Error: Can't get here - instead we recurse thru unlock\n";
 }
 
 sub locki_unlock {
@@ -642,8 +651,12 @@ sub locki_new_request {
 	$Locks{$lockname} = $locki;
 	_timelog("$locki->{lock}: New\n") if $Debug;
     }
-    # Give it to someone?
-    while (!$locki->{locked} && defined $locki->{waiters}[0]) {
+    # Present owner wants to grab it under a new connection
+    if ($locki->{locked} && ($locki->{owner} eq $clientvar->{user})) {
+	locki_lock_to_client($locki,$clientvar);
+    }
+    # Give it to next requester
+    elsif (!$locki->{locked} && defined $locki->{waiters}[0]) {
 	# Note the new lock request client may not still be around, if so we
 	# recurse back to this function with waiters one element shorter.
 	locki_lock ($locki);
@@ -679,8 +692,8 @@ sub _timelog_split {
     my $prefix = shift;
     my $text = shift;
     $text .= "\n" if $text !~ /\n$/;
-    my $msg = $first . join($prefix,split(/\n+/, "\n$text"));
-    _timelog($first)
+    my $msg = $first . join("\n$prefix", split(/\n+/, "\n$text"));
+    _timelog($msg)
 }
 
 ######################################################################
