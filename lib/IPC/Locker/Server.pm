@@ -373,12 +373,11 @@ sub client_lock {
 	# Done, and we already sent client_status when the lock was made
 	return 0;
     } elsif (!$clientvar->{block}) {
-	# User wants non-blocking, just send status
+	# All busy, and user wants non-blocking, just send status
 	client_status($clientvar);
 	return 0;
     } else {
-	# It's busy, we need to block the user's request.
-	# Tell the user
+	# All busy, we need to block the user's request and tell the user
 	if (!$clientvar->{told_locked} && $first_locki) {
 	    $clientvar->{told_locked} = 1;
 	    client_send ($clientvar, "print_waiting $first_locki->{owner}\n");
@@ -506,14 +505,20 @@ sub exist_traffic {
 ######################################################################
 #### Internals
 
-sub locki_lock {
+sub locki_action {
     # Give lock to next requestor that accepts it
     my $locki = shift || die;
 
-    _timelog("$locki->{lock}: Locki_lock:Waiter count: ".$#{$locki->{waiters}}."\n") if $Debug;
-    while (my $clientvar = shift @{$locki->{waiters}}) {
-    	_timelog("$locki->{lock}: Locki_lock:Shift count: ".$#{$locki->{waiters}}."\n") if $Debug;
+    _timelog("$locki->{lock}: Locki_action:Waiter count: ".$#{$locki->{waiters}}."\n") if $Debug;
+    if (!$locki->{locked} && defined $locki->{waiters}[0]) {
+	my $clientvar = shift @{$locki->{waiters}};
+	# Give it to a client.  If it fails, it will call locki_unlock then locki_action again
+	# so we just return after this.
 	locki_lock_to_client($locki,$clientvar);
+	return;
+    }
+    elsif (!$locki->{locked} && !defined $locki->{waiters}[0]) {
+	locki_delete ($locki);  # locki invalid
     }
 }
 
@@ -565,21 +570,16 @@ sub locki_unlock {
     $locki->{hostname} = "";
     $locki->{pid} = 0;
     # Give it to someone else?
-    while (!$locki->{locked} && defined $locki->{waiters}[0]) {
-	# Note the new lock request client may not still be around, if so we
-	# recurse back to this function with waiters one element shorter.
-	locki_lock ($locki);
-    }
-    locki_maybe_delete ($locki);  # locki may be deleted
+    # Note the new lock request client may not still be around, if so we
+    # recurse back to this function with waiters one element shorter.
+    locki_action ($locki);
 }
 
-sub locki_maybe_delete {
+sub locki_delete {
     my $locki = shift;
     # The locki may be deleted by this call
-    if (!$locki->{locked} && !defined $locki->{waiters}[0]) {
-	_timelog("$locki->{lock}: locki_delete\n") if $Debug;
-	delete $Locks{$locki->{lock}};
-    }
+    _timelog("$locki->{lock}: locki_delete\n") if $Debug;
+    delete $Locks{$locki->{lock}};
 }
 
 sub recheck_locks {
@@ -597,7 +597,7 @@ sub recheck_locks {
 sub locki_recheck {
     my $locki = shift;
     my $time = shift || fractime();
-    # See if any locks have changed state.
+    # See if any locks need to change state due to pid disappearance or timeout
     # The locki may be deleted by this call
     if ($locki->{locked}) {
 	if ($locki->{timelimit} && ($locki->{timelimit} <= $time)) {
@@ -640,7 +640,28 @@ sub locki_new_request {
     my $clientvar = shift;
     my $locki;
     if ($locki=locki_find($lockname)) {
-	push @{$locki->{waiters}}, $clientvar;
+	# Same existing owner wants to grab it under a new connection
+	if ($locki->{locked} && ($locki->{owner} eq $clientvar->{user})) {
+	    _timelog("c$clientvar->{client_num}: Renewing connection\n") if $Debug;
+	    locki_lock_to_client($locki,$clientvar);
+	} else {
+	    # Search waiters to see if already on list
+	    my $found;
+	    for (my $n=0; $n <= $#{$locki->{waiters}}; $n++) {
+		# Note the old client value != new client value, although the user is the same
+		if ($locki->{waiters}[$n]{user} eq $clientvar->{user}) {
+		    _timelog("c$clientvar->{client_num}: Renewing wait list\n") if $Debug;
+		    $locki->{waiters}[$n] = $clientvar;
+		    $found = 1;
+		    last;
+		}
+	    }
+	    if (!$found) {
+		_timelog("c$clientvar->{client_num}: New waiter\n") if $Debug;
+		push @{$locki->{waiters}}, $clientvar;
+	    }
+	    # Either way, we don't have the lock, so just hang out
+	}
     } else { # new
 	$locki = {
 	    lock=>$lockname,
@@ -650,16 +671,8 @@ sub locki_new_request {
 	};
 	$Locks{$lockname} = $locki;
 	_timelog("$locki->{lock}: New\n") if $Debug;
-    }
-    # Present owner wants to grab it under a new connection
-    if ($locki->{locked} && ($locki->{owner} eq $clientvar->{user})) {
-	locki_lock_to_client($locki,$clientvar);
-    }
-    # Give it to next requester
-    elsif (!$locki->{locked} && defined $locki->{waiters}[0]) {
-	# Note the new lock request client may not still be around, if so we
-	# recurse back to this function with waiters one element shorter.
-	locki_lock ($locki);
+	# Process it, which will establish the lock for this client
+	locki_action($locki);
     }
     return $locki;
 }
@@ -691,8 +704,7 @@ sub _timelog_split {
     my $first = shift;
     my $prefix = shift;
     my $text = shift;
-    $text .= "\n" if $text !~ /\n$/;
-    my $msg = $first . join("\n$prefix", split(/\n+/, "\n$text"));
+    my $msg = $first . join("\n$prefix", split(/\n+/, "\n$text")) . "\n";
     _timelog($msg)
 }
 
