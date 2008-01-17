@@ -1,9 +1,8 @@
-# IPC::Locker.pm -- distributed lock handler
 # $Id$
-# Wilson Snyder <wsnyder@wsnyder.org>
+# See copyright, etc in below POD section.
 ######################################################################
 #
-# Copyright 1999-2007 by Wilson Snyder.  This program is free software;
+# Copyright 1999-2008 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 #
@@ -33,7 +32,7 @@ use Carp;
 # Other configurable settings.
 $Debug = 0;
 
-$VERSION = '1.472';
+$VERSION = '1.480';
 
 ######################################################################
 #### Creator
@@ -276,7 +275,7 @@ looked up via /etc/services, else 1752.
 
 The latest version is available from CPAN and from L<http://www.veripool.com/>.
 
-Copyright 2002-2007 by Wilson Snyder.  This package is free software; you
+Copyright 2002-2008 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License or the Perl Artistic License.
 

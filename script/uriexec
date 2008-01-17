@@ -1,17 +1,6 @@
 #!/usr/bin/perl -w
 # $Id$
-######################################################################
-#
-# Copyright 2005-2007 by Jeff Dutton <jdutton@cpan.org>.  This program is
-# free software; you can redistribute it and/or modify it under
-# the terms of either the GNU Lesser General Public License or the Perl
-# Artistic License.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#                                                                           
+# See copyright, etc in below POD section.
 ######################################################################
 
 use lib './blib/lib';        # testing
@@ -147,7 +136,7 @@ users, not scripts.
 
 =head1 DISTRIBUTION
 
-Copyright 2005-2007 by Jeff Dutton <jdutton@cpan.org>.  This program is
+Copyright 2005-2008 by Jeff Dutton <jdutton@cpan.org>.  This program is
 free software; you can redistribute it and/or modify it under the terms of
 either the GNU Lesser General Public License or the Perl Artistic License.
 

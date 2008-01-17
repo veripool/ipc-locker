@@ -1,17 +1,5 @@
-# IPC::Locker.pm -- distributed lock handler
 # $Id$
-# Wilson Snyder <wsnyder@wsnyder.org>
-######################################################################
-#
-# Copyright 1999-2007 by Wilson Snyder.  This program is free software;
-# you can redistribute it and/or modify it under the terms of either the GNU
-# General Public License or the Perl Artistic License.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
+# See copyright, etc in below POD section.
 ######################################################################
 
 =head1 NAME
@@ -204,7 +192,7 @@ The port number (INET) or name (UNIX) of the lock server.  Defaults to
 
 The latest version is available from CPAN and from L<http://www.veripool.com/>.
 
-Copyright 1999-2007 by Wilson Snyder.  This package is free software; you
+Copyright 1999-2008 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License or the Perl Artistic License.
 
@@ -243,7 +231,7 @@ use Carp;
 # Other configurable settings.
 $Debug = 0;
 
-$VERSION = '1.472';
+$VERSION = '1.480';
 
 ######################################################################
 #### Useful Globals
