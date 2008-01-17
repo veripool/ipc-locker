@@ -6,12 +6,12 @@
 # Copyright 1999-2007 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 ######################################################################
 
 =head1 NAME
@@ -72,7 +72,7 @@ L<IPC::Locker>, L<lockerd>
 ######################################################################
 
 package IPC::Locker::Server;
-require 5.004;
+require 5.006;
 require Exporter;
 @ISA = qw(Exporter);
 
@@ -102,6 +102,12 @@ $Hostname = IPC::Locker::hostfqdn();
 # All held locks
 %Locks = ();
 our $_Client_Num = 0;  # Debug use only
+our $StartTime = time();
+
+our $RecheckLockDelta = 1;		# Loop all locks every N seconds
+our $PollDelta = 1;			# Poll every N seconds for activity
+our $AutoUnlockCheckDelta = 2;		# Check every N seconds for pid existance
+our $AutoUnlockCheckPerSec = 100;	# Check at most N existances per second
 
 ######################################################################
 #### Creator
@@ -129,7 +135,7 @@ sub start_server {
     my $self = shift;
 
     # Open the socket
-    print "Listening on $self->{port}\n" if $Debug;
+    _timelog("Listening on $self->{port}\n") if $Debug;
     my $server;
     if ($self->{family} eq 'INET') {
     	$server = IO::Socket::INET->new( Proto     => 'tcp',
@@ -157,26 +163,26 @@ sub start_server {
     #$SIG{ALRM} = \&sig_alarm;
     $SIG{INT}= \&sig_INT;
     $SIG{HUP}= \&sig_INT;
-    
+
     while (!$Interrupts) {
-	print "Pre-Poll $!\n" if $Debug;
+	_timelog("Pre-Poll $!\n") if $Debug;
+	#use Data::Dumper; Carp::cluck(Dumper(\%Clients, \%Locks));
 	$! = 0;
 	my (@r, @w, @e);
 
-	my $timeout = ((scalar keys %Locks) ? 10 : 2000);
-    	my $npolled = $Poll->poll($timeout); 
+	my $timeout = ((scalar keys %Locks) ? $PollDelta : 2000);
+    	my $npolled = $Poll->poll($timeout);
 	if ($npolled>0) {
 	    @r = $Poll->handles(POLLIN);
 	    @e = $Poll->handles(POLLERR | POLLHUP | POLLNVAL);
 	    #@w = $Poll->handles(POLLOUT);
 	}
-	print "Poll $npolled Locks=",(scalar keys %Locks),": $#r $#w $#e $!\n" if $Debug;
+	_timelog("Poll $npolled Locks=",(scalar keys %Locks),": $#r $#w $#e $!\n") if $Debug;
         foreach my $fh (@r) {
             if ($fh == $server) {
         	# Create a new socket
         	my $clientfh = $server->accept;
         	$Poll->mask($clientfh => (POLLIN | POLLERR | POLLHUP | POLLNVAL));
-		print $clientfh "HELLO\n" if $Debug;
 		#
 		my $clientvar = {socket=>$clientfh,
 				 input=>'',
@@ -184,6 +190,7 @@ sub start_server {
 			     };
 		$clientvar->{client_num} = $_Client_Num++ if $Debug;
 		$Clients{$clientfh}=$clientvar;
+		client_send($clientvar,"HELLO\n") if $Debug;
 	    } elsif ($fh == $exister_fh) {
 		exist_traffic();
 	    } else {
@@ -199,10 +206,10 @@ sub start_server {
 		    my @lines = split /\n/, $line;
 		    if ($line =~ /\n$/) {
 		    	$Clients{$fh}->{input}='';
-			print "Nothing Left\n" if $Debug;
+			_timelog("Nothing Left\n") if $Debug;
 		    } else {
 		    	$Clients{$fh}->{input}=pop @lines;
-			print "Left: ".$Clients{$fh}->{input}."\n" if $Debug;
+			_timelog("Left: ".$Clients{$fh}->{input}."\n") if $Debug;
 		    }
 		    client_service($Clients{$fh}, \@lines);
 		}
@@ -216,7 +223,7 @@ sub start_server {
         }
 	$self->recheck_locks();
     }
-    print "Loop end\n" if $Debug;
+    _timelog("Loop end\n") if $Debug;
 }
 
 ######################################################################
@@ -227,10 +234,10 @@ sub client_service {
     my $clientvar = shift || die;
     my $linesref = shift;
     # Loop getting commands from a specific client
-    print "$clientvar->{client_num}: REQS $clientvar->{socket}\n" if $Debug;
-    
+    _timelog("c$clientvar->{client_num}: REQS $clientvar->{socket}\n") if $Debug;
+
     if (defined $clientvar->{inputlines}[0]) {
-	print "$clientvar->{client_num}: handling pre-saved lines\n" if $Debug;
+	_timelog("c$clientvar->{client_num}: handling pre-saved lines\n") if $Debug;
 	$linesref = [@{$clientvar->{inputlines}}, @{$linesref}];
 	$clientvar->{inputlines} = [];  # Zap, in case we get called recursively
     }
@@ -238,7 +245,7 @@ sub client_service {
     # We may return before processing all lines, thus the lines are
     # stored in the client variables
     foreach my $line (@{$linesref}) {
-	print "$clientvar->{client_num}: REQ $line\n" if $Debug;
+	_timelog("c$clientvar->{client_num}: REQ $line\n") if $Debug;
 	my ($cmd,@param) = split /\s+/, $line;  # We rely on the newline to terminate the split
 	if ($cmd) {
 	    # Variables
@@ -256,13 +263,13 @@ sub client_service {
 	    }
 	    elsif ($cmd eq 'LOCK') {
 		my $wait = client_lock ($clientvar);
-		print "$clientvar->{client_num}: Wait= $wait\n" if $Debug;
+		_timelog("c$clientvar->{client_num}: Wait= $wait\n") if $Debug;
 		last if $wait;
 	    }
 	    elsif ($cmd eq 'EOF') {
 		client_close ($clientvar);
 		undef $clientvar;
-		last; 
+		last;
 	    }
 
 	    # Infrequent commands
@@ -274,6 +281,9 @@ sub client_service {
 	    }
 	    elsif ($cmd eq 'LOCK_LIST') {
 		client_lock_list ($clientvar);
+	    }
+	    elsif ($cmd eq 'VERSION') {
+		client_send ($clientvar, "version $VERSION $StartTime\n\n");
 	    }
 	    elsif ($cmd eq 'RESTART') {
 		die "restart";
@@ -299,26 +309,25 @@ sub client_close {
 sub client_status {
     # Send status of lock back to client
     my $clientvar = shift || die;
-    my @totry = ($clientvar->{lock});
-    @totry = @{$clientvar->{locks}} if !defined $clientvar->{lock};
     $clientvar->{locked} = 0;
     $clientvar->{owner} = "";
     my $send = "";
-    foreach my $lockname (@totry) {
-	my $locki = locki_lookup ($lockname);
-	$clientvar->{locked} = ($locki->{owner} eq $clientvar->{user})?1:0;
-	$clientvar->{owner} = $locki->{owner};
-	$clientvar->{lock} = $locki->{lock};
-	if ($clientvar->{locked} && $clientvar->{told_locked}) {
-	    $clientvar->{told_locked} = 0;
-	    $send .= "print_obtained\n";
+    foreach my $lockname (@{$clientvar->{locks}}) {
+	if (my $locki = locki_find ($lockname)) {
+	    $clientvar->{locked} = ($locki->{owner} eq $clientvar->{user})?1:0;
+	    $clientvar->{owner} = $locki->{owner};
+	    $clientvar->{locks} = [$locki->{lock}] if $locki->{locked};
+	    if ($clientvar->{locked} && $clientvar->{told_locked}) {
+		$clientvar->{told_locked} = 0;
+		$send .= "print_obtained\n";
+	    }
+	    last if $clientvar->{locked};
 	}
-	last if $clientvar->{locked};
     }
 
     $send .= "owner $clientvar->{owner}\n";
     $send .= "locked $clientvar->{locked}\n";
-    $send .= "lockname $clientvar->{lock}\n" if $clientvar->{locked};
+    $send .= "lockname $clientvar->{locks}[0]\n" if $clientvar->{locked};
     $send .= "error $clientvar->{error}\n" if $clientvar->{error};
     $send .= "\n\n";  # End of group.  Some day we may not always send EOF immediately
     return client_send ($clientvar, $send);
@@ -326,54 +335,60 @@ sub client_status {
 
 sub client_lock_list {
     my $clientvar = shift || die;
-    print "$clientvar->{client_num}: Locklist!\n" if $Debug;
+    _timelog("c$clientvar->{client_num}: Locklist!\n") if $Debug;
     while (my ($lockname, $lock) = each %Locks) {
 	if (!$lock->{locked}) {
-	    print "$clientvar->{client_num}: Note unlocked lock $lockname\n" if $Debug;
+	    _timelog("c$clientvar->{client_num}: Note unlocked lock $lockname\n") if $Debug;
 	    next;
 	}
 	client_send ($clientvar, "lock $lockname $lock->{owner}\n");
     }
     return client_send ($clientvar, "\n\n");
 }
- 
+
 sub client_lock {
     # Client wants this lock, return true if delayed transaction
     my $clientvar = shift || die;
-    # Look for a free lock
-  trial:  # We only have one trial, but the loop lets us 'last' out of it.
-    while (1) {
-	# Try all locks
-	foreach my $lockname (@{$clientvar->{locks}}) {
-	    print "$clientvar->{client_num}: **try1 $lockname\n" if $Debug;
-	    my $locki = locki_lookup ($lockname);
-	    # Try to cleanup existing lock
-	    _recheck_lock($locki, undef);
-	    # Already locked by this guy?
-	    last trial if ($locki->{owner} eq $clientvar->{user} && $locki->{locked});
-	    # Attempt to assign to us
-	    if (!$locki->{locked}) {
-		push @{$locki->{waiters}}, $clientvar;
-		locki_lock($locki);
-		#print "$clientvar->{client_num}: nl $lockname a $locki->{lock} b $clientvar->{lock}\n";
-		last trial if ($locki->{owner} eq $clientvar->{user});
+
+    # Fast case, see if there are any non-allocated locks
+    foreach my $lockname (@{$clientvar->{locks}}) {
+	_timelog("c$clientvar->{client_num}: check $lockname\n") if $Debug;
+	if (my $locki = locki_find ($lockname)) {
+	    # See if the user's machine can clear it
+	    if ($locki->{autounlock} && $clientvar->{autounlock}) {
+		client_send ($clientvar, "autounlock_check $locki->{lock} $locki->{hostname} $locki->{pid}\n");
 	    }
+	    # Try to have timer/exister clearup existing lock
+	    locki_recheck($locki,undef); # locki maybe deleted
+	} else {
+	    # Know there's a free lock, munge request to point to only it
+	    $clientvar->{locks} = [$lockname];
+	    last;
 	}
-	# All locks busy
-	last trial if (!$clientvar->{block});
-	# It's busy, wait for them all
-	my $first_locki = undef;
-	foreach my $lockname (@{$clientvar->{locks}}) {
-	    print "$clientvar->{client_num}: **try2 $lockname\n" if $Debug;
-	    my $locki = locki_lookup ($lockname);
-	    if ($locki->{locked}) {
-		$first_locki = $locki;
-		push @{$locki->{waiters}}, $clientvar;
-		if ($locki->{autounlock} && $clientvar->{autounlock}) {
-		    client_send ($clientvar, "autounlock_check $locki->{lock} $locki->{hostname} $locki->{pid}\n");
-		}
-	    }
-	}
+    }
+
+    # Create lock requests
+    my $first_locki = undef;
+    foreach my $lockname (@{$clientvar->{locks}}) {
+	_timelog("c$clientvar->{client_num}: new $lockname\n") if $Debug;
+	# Create new request.  If it can be serviced, this will
+	# establish the lock and send status back.
+	my $locki = locki_new_request($lockname, $clientvar);
+	$first_locki = $locki;
+	# Done if found free lock
+	last if $clientvar->{locked};
+    }
+
+    # All locks busy?
+    if ($clientvar->{locked}) {
+	# Done, and we already sent client_status when the lock was made
+	return 0;
+    } elsif (!$clientvar->{block}) {
+	# User wants non-blocking, just send status
+	client_status($clientvar);
+	return 0;
+    } else {
+	# It's busy, we need to block the user's request.
 	# Tell the user
 	if (!$clientvar->{told_locked} && $first_locki) {
 	    $clientvar->{told_locked} = 1;
@@ -382,38 +397,41 @@ sub client_lock {
 	# Either need to wait for timeout, or someone else to return key
 	return 1;	# Exit loop and check if can lock later
     }
-    client_status ($clientvar);
-    0;
 }
 
 sub client_break {
     my $clientvar = shift || die;
+    # The locki may be deleted by this call
     foreach my $lockname (@{$clientvar->{locks}}) {
-	my $locki = locki_lookup ($lockname);
-	if ($locki && $locki->{locked}) {
-	    print "$clientvar->{client_num}: broke lock   $locki->{locks} User $clientvar->{user}\n" if $Debug;
-	    client_send ($clientvar, "print_broke $locki->{owner}\n");
-	    locki_unlock ($locki);
+	if (my $locki = locki_find ($lockname)) {
+	    if ($locki->{locked}) {
+		_timelog("c$clientvar->{client_num}: broke lock   $locki->{locks} User $clientvar->{user}\n") if $Debug;
+		client_send ($clientvar, "print_broke $locki->{owner}\n");
+		locki_unlock ($locki);  # locki may be deleted
+	    }
 	}
     }
     client_status ($clientvar);
 }
 
 sub client_unlock {
-    # Client request to unlock the given lock
     my $clientvar = shift || die;
+    # Client request to unlock the given lock
+    # The locki may be deleted by this call
+    $clientvar->{locked} = 0;
     foreach my $lockname (@{$clientvar->{locks}}) {
-	my $locki = locki_lookup ($lockname);
-	if ($locki->{owner} eq $clientvar->{user}) {
-	    print "$clientvar->{client_num}: Unlocked   $locki->{lock} User $clientvar->{user}\n" if $Debug;
-	    locki_unlock ($locki);
-	} else {
-	    # Doesn't hold lock but might be waiting for it.
-	    print "$clientvar->{client_num}: Waiter count: ".$#{$locki->{waiters}}."\n" if $Debug;
-	    for (my $n=0; $n <= $#{$locki->{waiters}}; $n++) {
-		if ($locki->{waiters}[$n]{user} eq $clientvar->{user}) {
-		    print "$clientvar->{client_num}: Dewait     $locki->{lock} User $clientvar->{user}\n" if $Debug;
-		    splice @{$locki->{waiters}}, $n, 1;
+	if (my $locki = locki_find ($lockname)) {
+	    if ($locki->{owner} eq $clientvar->{user}) {
+		_timelog("c$clientvar->{client_num}: Unlocked   $locki->{lock} User $clientvar->{user}\n") if $Debug;
+		locki_unlock ($locki); # locki may be deleted
+	    } else {
+		# Doesn't hold lock but might be waiting for it.
+		_timelog("c$clientvar->{client_num}: Waiter count: ".$#{$locki->{waiters}}."\n") if $Debug;
+		for (my $n=0; $n <= $#{$locki->{waiters}}; $n++) {
+		    if ($locki->{waiters}[$n]{user} eq $clientvar->{user}) {
+			_timelog("c$clientvar->{client_num}: Dewait     $locki->{lock} User $clientvar->{user}\n") if $Debug;
+			splice @{$locki->{waiters}}, $n, 1;
+		    }
 		}
 	    }
 	}
@@ -428,8 +446,8 @@ sub client_send {
 
     my $clientfh = $clientvar->{socket};
     return 0 if (!$clientfh);
-    print "$clientvar->{client_num}: RESP $clientfh"
-	.join("\n$clientvar->{client_num}: RES  ",split(/\n/,"\n$msg")),"\n" if $Debug;
+    _timelog_split("c$clientvar->{client_num}: RESP $clientfh\n",
+		   "\nc$clientvar->{client_num}: RES  ", $msg) if $Debug;
 
     $SIG{PIPE} = 'IGNORE';
     my $status = eval { send $clientfh,$msg,0; };
@@ -477,22 +495,22 @@ sub fractime {
 
 sub exist_traffic {
     # Handle UDP responses from our $Exister->pid_request calls.
-    print "UDP PidStat in...\n" if $Debug;
+    _timelog("UDP PidStat in...\n") if $Debug;
     my ($pid,$exists,$onhost) = $Exister->recv_stat();
     return if !defined $pid;
     return if $exists;   # We only care about known-missing processes
-    print "   UDP PidStat PID $pid no longer with us.  RIP.\n" if $Debug;
+    _timelog("   UDP PidStat PID $pid no longer with us.  RIP.\n") if $Debug;
     # We don't maintain a table sorted by pid, as these messages
     # are rare, and there can be many locks per pid.
     foreach my $locki (values %Locks) {
 	if ($locki->{locked} && $locki->{autounlock}
 	    && $locki->{hostname} eq $onhost
 	    && $locki->{pid} == $pid) {
-	    print "\tUDP RIP Unlock\n" if $Debug;
-	    locki_unlock($locki);		# break the lock
+	    _timelog("\tUDP RIP Unlock\n") if $Debug;
+	    locki_unlock($locki); # break the lock, locki may be deleted
 	}
     }
-    print "   UDP RIP done\n\n" if $Debug;
+    _timelog("   UDP RIP done\n\n") if $Debug;
 }
 
 ######################################################################
@@ -503,9 +521,9 @@ sub locki_lock {
     # Give lock to next requestor that accepts it
     my $locki = shift || die;
 
-    print "Locki_lock:1:Waiter count: ".$#{$locki->{waiters}}."\n" if $Debug;
+    _timelog("$locki->{lock}: Locki_lock:Waiter count: ".$#{$locki->{waiters}}."\n") if $Debug;
     while (my $clientvar = shift @{$locki->{waiters}}) {
-    	print "Locki_lock:2:Waiter count: ".$#{$locki->{waiters}}."\n" if $Debug;
+    	_timelog("$locki->{lock}: Locki_lock:Shift count: ".$#{$locki->{waiters}}."\n") if $Debug;
 	$locki->{locked} = 1;
 	$locki->{owner} = $clientvar->{user};
 	if ($clientvar->{timeout}) {
@@ -516,25 +534,34 @@ sub locki_lock {
 	$locki->{autounlock} = $clientvar->{autounlock};
 	$locki->{hostname} = $clientvar->{hostname};
 	$locki->{pid} = $clientvar->{pid};
-	$clientvar->{lock} = $locki->{lock};
-	print "Issuing $locki->{lock} $locki->{owner}\n" if $Debug;
-	# This is the only call to a client_ routine not in the direct
-	# client call stack.  Thus we may need to process more commands
-	# after this call
-	if (client_status ($clientvar)) {
-	    # Worked ok
-	    client_service($clientvar, []);  # If any queued, handle more commands/ EOF
-	    last; # Don't look for another lock waiter
+	_timelog("$locki->{lock}: Issuing to $locki->{owner}\n") if $Debug;
+	if ($clientvar->{locked} && $clientvar->{locks}[0] ne $locki->{lock}) {
+	    # Client gave a choice of locks, and another one got to
+	    # satisify it first
+	    _timelog("$locki->{lock}: Already has different lock\n") if $Debug;
+	    return locki_unlock ($locki); # locki_unlock may recurse to call locki_lock
 	}
-	# Else hung up, didn't get the lock, give to next guy
-	print "Hangup  $locki->{lock} $locki->{owner}\n" if $Debug;
-	locki_unlock ($locki);
+	else {
+	    # This is the only call to a client_ routine not in the direct
+	    # client call stack.  Thus we may need to process more commands
+	    # after this call
+	    if (client_status ($clientvar)) {   # sets clientvar->{locked}
+		# Worked ok
+		client_service($clientvar, []);  # If any queued, handle more commands/ EOF
+		last; # Don't look for another lock waiter
+	    }
+	    # Else hung up, didn't get the lock, give to next guy
+	    _timelog("$locki->{lock}: Owner hangup $locki->{owner}\n") if $Debug;
+	    return locki_unlock ($locki); # locki_unlock may recurse to call locki_lock
+	}
+	die "%Error: Can't get here - instead we recurse thru unlock\n";
     }
 }
 
 sub locki_unlock {
-    # Unlock this lock
     my $locki = shift || die;
+    # Unlock this lock
+    # The locki may be deleted by this call
     $locki->{locked} = 0;
     $locki->{owner} = "unlocked";
     $locki->{autounlock} = 0;
@@ -546,13 +573,14 @@ sub locki_unlock {
 	# recurse back to this function with waiters one element shorter.
 	locki_lock ($locki);
     }
-    #TBD locki_maybe_delete ($locki);
+    locki_maybe_delete ($locki);  # locki may be deleted
 }
 
 sub locki_maybe_delete {
     my $locki = shift;
+    # The locki may be deleted by this call
     if (!$locki->{locked} && !defined $locki->{waiters}[0]) {
-	print "locki_delete: $locki->{lock}\n" if $Debug;
+	_timelog("$locki->{lock}: locki_delete\n") if $Debug;
 	delete $Locks{$locki->{lock}};
     }
 }
@@ -562,40 +590,46 @@ sub recheck_locks {
     # Main loop to see if any locks have changed state
     my $time = fractime();
     if (($self->{_recheck_locks_time}||0) < $time) {
-	$self->{_recheck_locks_time} = $time + 1;
+	$self->{_recheck_locks_time} = $time + $RecheckLockDelta;
 	foreach my $locki (values %Locks) {
-	    _recheck_lock($locki,$time);
+	    locki_recheck($locki,$time); # locki may be deleted
 	}
     }
 }
 
-sub _recheck_lock {
+sub locki_recheck {
     my $locki = shift;
     my $time = shift || fractime();
-    # See if any locks have changed state
+    # See if any locks have changed state.
+    # The locki may be deleted by this call
     if ($locki->{locked}) {
 	if ($locki->{timelimit} && ($locki->{timelimit} <= $time)) {
-	    print "Timeout $locki->{lock} $locki->{owner}\n" if $Debug;
-	    locki_unlock ($locki);
+	    _timelog("$locki->{lock}: Timeout of $locki->{owner}\n") if $Debug;
+	    locki_unlock ($locki); # locki may be deleted
 	}
 	elsif ($locki->{autounlock}) {   # locker said it was OK to break lock if he dies
 	    if (($locki->{autounlock_check_time}||0) < $time) {
-		$locki->{autounlock_check_time} = $time + 2;
+		# If there's 1000 locks, we don't want to check them all
+		# in one second, so scale back appropriately.
+		my $chkdelta = ($AutoUnlockCheckDelta
+				+ ((scalar keys %Locks)/$AutoUnlockCheckPerSec));
+		$locki->{autounlock_check_time} = $time + $chkdelta;
 		# Only check every 2 secs or so, else we can spend more time
 		# doing the OS calls than it's worth
 		my $dead = undef;
 		if ($locki->{hostname} eq $Hostname) {	# lock owner is running on same host
 		    $dead = IPC::PidStat::local_pid_doesnt_exist($locki->{pid});
 		    if ($dead) {
-			print "Autounlock $locki->{lock} $locki->{owner}\n" if $Debug;
-			locki_unlock($locki);		# break the lock
+			_timelog("$locki->{lock}: Autounlock of $locki->{owner}\n") if $Debug;
+			locki_unlock($locki); # break the lock, locki may be deleted
 		    }
 		}
 		if (!defined $dead) {
-		    # Ask the other host if the PID is around
+		    # Ask the other host if the PID is gone
 		    # Or, we had a permission problem so ask root.
-		    print "UDP pid_request $locki->{hostname}\n" if $Debug;
-		    $Exister->pid_request(host=>$locki->{hostname}, pid=>$locki->{pid});
+		    _timelog("$locki->{lock}: UDP pid_request $locki->{hostname} $locki->{pid}\n") if $Debug;
+		    $Exister->pid_request(host=>$locki->{hostname}, pid=>$locki->{pid},
+					  return_exist=>0, return_doesnt=>1, return_unknown=>1);
 		    # This may (or may not) return a UDP message with the status in it.
 		    # If so, they will call exist_traffic.
 		}
@@ -604,25 +638,61 @@ sub _recheck_lock {
     }
 }
 
-sub locki_lookup {
+sub locki_new_request {
     my $lockname = shift || "lock";
-    if (!defined $Locks{$lockname}{lock}) {
-	$Locks{$lockname} = {
+    my $clientvar = shift;
+    my $locki;
+    if ($locki=locki_find($lockname)) {
+	push @{$locki->{waiters}}, $clientvar;
+    } else { # new
+	$locki = {
 	    lock=>$lockname,
 	    locked=>0,
 	    owner=>"unlocked",
-	    waiters=>[],
+	    waiters=>[$clientvar],
 	};
+	$Locks{$lockname} = $locki;
+	_timelog("$locki->{lock}: New\n") if $Debug;
     }
-    return $Locks{$lockname};
+    # Give it to someone?
+    while (!$locki->{locked} && defined $locki->{waiters}[0]) {
+	# Note the new lock request client may not still be around, if so we
+	# recurse back to this function with waiters one element shorter.
+	locki_lock ($locki);
+    }
+    return $locki;
+}
+
+sub locki_find {
+    return $Locks{$_[0] || "lock"};
 }
 
 sub DESTROY {
     my $self = shift;
-    print "DESTROY\n" if $Debug;
+    _timelog("DESTROY\n") if $Debug;
     if (($self->{family} eq 'UNIX') && $self->{unix_socket_created}){
     	unlink $self->{port};
     }
+}
+
+######################################################################
+#### Logging
+
+sub _timelog {
+    my $msg = join('',@_);
+    my ($time, $time_usec) = Time::HiRes::gettimeofday();
+    my ($sec,$min,$hour,$mday,$mon) = localtime($time);
+    printf +("[%02d/%02d %02d:%02d:%02d.%06d] %s",
+	     $mon+1, $mday, $hour, $min, $sec, $time_usec, $msg);
+}
+
+sub _timelog_split {
+    my $first = shift;
+    my $prefix = shift;
+    my $text = shift;
+    $text .= "\n" if $text !~ /\n$/;
+    my $msg = $first . join($prefix,split(/\n+/, "\n$text"));
+    _timelog($first)
 }
 
 ######################################################################

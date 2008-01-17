@@ -2,11 +2,16 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
-* IPC::Locker 1.47***
+* IPC::Locker 1.48***
+
+change files to say "see below copyright"
+change year
+
+****	Added return type suppression to IPC::PidStat::pid_request.
 
 ****	Fix server to support over 1024 client connections.
 
-****	Lockerd performance enhancements to support > 1000 requests/second.
+****	Lockerd performance enhancements to support > 3000 requests/second.
 
 * IPC::Locker 1.472 7/16/2007
 
