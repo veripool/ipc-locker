@@ -74,11 +74,17 @@ sub pid_request {
     my $self = shift;
     my %params = (host=>'localhost',
 		  pid=>$$,
+		  return_exist=>1,
+		  return_doesnt=>1,
+		  return_unknown=>1,
 		  @_);
 
     $self->open_socket();  #open if not already
 
-    my $out_msg = "PIDR $params{pid} $params{host}\n";
+    my $reqval = (($params{return_exist}?1:0)
+		  | ($params{return_doesnt}?2:0)
+		  | ($params{return_unknown}?4:0));
+    my $out_msg = "PIDR $params{pid} $params{host} $reqval\n";
 
     my $ipnum = $self->{_host_ips}->{$params{host}};
     if (!$ipnum) {
@@ -218,6 +224,12 @@ Creates a new object for later use.  See the PARAMETERS section.
 
 Sends a request to the specified host's server to see if the specified PID
 exists.
+
+The optional parameters return_exist=>0, return_doesnt=>0 and
+return_unknown=>0 improve performance by suppressing return messages if the
+specified pid exists, doesn't exist, or has unknown state respectively.
+Pidstatd versions before 1.480 ignore this flag, so the return code from
+recv_stat should not assume the undesired return types will be suppressed.
 
 =item pid_request_recv (host=>$host, pid=>$pid);
 

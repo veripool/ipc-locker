@@ -67,20 +67,35 @@ sub start_server {
 	my $in_msg;
 	next unless $server->recv($in_msg, 8192);
 	print "Got msg $in_msg\n" if $Debug;
-	if ($in_msg    =~ /^PIDR (\d+) (\S+)/  	# PID request, new format
-	    || $in_msg =~ /^PIDR (\d+)/) {  # PID request, old format
-	    my $pid = $1;
-	    my $host = $2 || $Hostname;  # Loop the host through, as the machine may have multiple names
+	my ($cmd,@param) = split /\s+/, $in_msg;  # We rely on the newline to terminate the split
+	# We ignore unknown parameters for forward compatibility
+	# PIDR (\d+) (\S+) ([0123])	# PID request, format after 1.480
+	# PIDR (\d+) (\S+)  		# PID request, format after 1.461
+	# PIDR (\d+)			# PID request, format before 1.461
+	if ($cmd eq 'PIDR') {
+	    my $pid = $param[0];
+	    my $host = $param[1] || $Hostname;  # Loop the host through, as the machine may have multiple names
+	    my $which = $param[2] || 3;
 	    $! = undef;
 	    my $exists = IPC::PidStat::local_pid_exists($pid);
-	    if (defined $exists) {  # Else perhaps we're not running as root?
-		my $out_msg = "EXIS $pid $exists $host";  # PID response
-		print "   Send msg $out_msg\n" if $Debug;
-		$server->send($out_msg);  # or die... But we'll ignore errors
-	    } else {
-		my $out_msg = "UNKN $pid na $host";  # PID response
-		print "   Send msg $out_msg\n" if $Debug;
-		$server->send($out_msg);  # or die... But we'll ignore errors
+	    if ($exists) {
+		if ($which & 1) {
+		    my $out_msg = "EXIS $pid $exists $host";  # PID response
+		    print "   Send msg $out_msg\n" if $Debug;
+		    $server->send($out_msg);  # or die... But we'll ignore errors
+		}
+	    } elsif (defined $exists) {  # Known not to exist
+		if ($which & 2) {
+		    my $out_msg = "EXIS $pid $exists $host";  # PID response
+		    print "   Send msg $out_msg\n" if $Debug;
+		    $server->send($out_msg);  # or die... But we'll ignore errors
+		}
+	    } else {  # Perhaps we're not running as root?
+		if ($which & 4) {
+		    my $out_msg = "UNKN $pid na $host";  # PID response
+		    print "   Send msg $out_msg\n" if $Debug;
+		    $server->send($out_msg);  # or die... But we'll ignore errors
+		}
 	    }
 	}
     }
