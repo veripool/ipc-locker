@@ -370,6 +370,17 @@ sub break_lock {
     return ($self);
 }
 
+sub dead_pid {
+    my $self = shift; (ref $self) or croak 'usage: $self->dead_pid()';
+    my %args = (host => hostfqdn(),
+		pid => -1,
+		@_);
+    # Used internally to indicate a pid is gone.
+    $self->_request("DEAD_PID $args{host} $args{pid}");
+    croak $self->{error} if $self->{error};
+    return ($self);
+}
+
 ######################################################################
 #### User utilities: owner
 
@@ -490,11 +501,15 @@ sub _request {
  	}
 	if ($cmd eq "autounlock_check") {
 	    # See if we can break the lock because the lock holder ran on this same machine.
-	    my ($lname,$lhost,$lpid) = @args;
+	    my ($lname,$lhost,$lpid,$supports_dead) = @args;
 	    if ($self->{hostname} eq $lhost) {
 		if (IPC::PidStat::local_pid_doesnt_exist($lpid)) {
-		    print "Autounlock_LOCAL $lname $lhost $lpid\n" if $Debug;
-		    $self->break_lock(lock=>$self->{lock});
+		    print "Autounlock_LOCAL $lname $lhost $lpid $supports_dead\n" if $Debug;
+		    if ($supports_dead) {  # 1.480 server and newer
+			$self->dead_pid(host=>$lhost, pid=>$lpid);
+		    } else {  # This has a potential race case, which may kill the wrong lock
+			$self->break_lock(lock=>$self->{lock});
+		    }
 		    $fh->close();
 		    goto retry;
 		}

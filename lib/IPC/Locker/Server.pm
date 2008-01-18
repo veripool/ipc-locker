@@ -267,6 +267,9 @@ sub client_service {
 	    elsif ($cmd eq 'BREAK_LOCK') {
 		client_break  ($clientvar);
 	    }
+	    elsif ($cmd eq 'DEAD_PID') {
+		dead_pid($param[0],$param[1]);
+	    }
 	    elsif ($cmd eq 'LOCK_LIST') {
 		client_lock_list ($clientvar);
 	    }
@@ -345,7 +348,9 @@ sub client_lock {
 	if ($locki && $locki->{owner} ne $clientvar->{user}) {
 	    # See if the user's machine can clear it
 	    if ($locki->{autounlock} && $clientvar->{autounlock}) {
-		client_send ($clientvar, "autounlock_check $locki->{lock} $locki->{hostname} $locki->{pid}\n");
+		# The 2 is for supports DEAD_PID added in version 1.480
+		# Older clients will ignore it.
+		client_send ($clientvar, "autounlock_check $locki->{lock} $locki->{hostname} $locki->{pid} 2\n");
 	    }
 	    # Try to have timer/exister clearup existing lock
 	    locki_recheck($locki,undef); # locki maybe deleted
@@ -485,14 +490,21 @@ sub exist_traffic {
     # Handle UDP responses from our $Exister->pid_request calls.
     _timelog("UDP PidStat in...\n") if $Debug;
     my ($pid,$exists,$onhost) = $Exister->recv_stat();
-    return if !defined $pid;
-    return if $exists;   # We only care about known-missing processes
-    _timelog("   UDP PidStat PID $pid no longer with us.  RIP.\n") if $Debug;
+    if (defined $pid && $exists) {
+	# We only care about known-missing processes
+	_timelog("   UDP PidStat PID $pid no longer with us.  RIP.\n") if $Debug;
+	dead_pid($onhost,$pid);
+    }
+}
+
+sub dead_pid {
+    my $host = shift;
+    my $pid = shift;
     # We don't maintain a table sorted by pid, as these messages
     # are rare, and there can be many locks per pid.
     foreach my $locki (values %Locks) {
 	if ($locki->{locked} && $locki->{autounlock}
-	    && $locki->{hostname} eq $onhost
+	    && $locki->{hostname} eq $host
 	    && $locki->{pid} == $pid) {
 	    _timelog("\tUDP RIP Unlock\n") if $Debug;
 	    locki_unlock($locki); # break the lock, locki may be deleted
