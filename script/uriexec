@@ -82,9 +82,9 @@ sub user_decode {
     $str = uri_decode($str);
     if ($str =~ /(.*?\buriexec\s)(.*)$/) {
 	$str = $1." ".user_decode($2,$level+1);
-	return "{${level}{ ".$str." }$level} ";
+	return "{".$level."{ ".$str." }".$level."} ";
     }
-    return "{${level}{ ".$str." }$level} ";
+    return "{".$level."{ ".$str." }".$level." ";
 }
 
 #######################################################################

@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# $Id:$
+# $Id$
 # See copyright, etc in below POD section.
 ######################################################################
 
@@ -16,7 +16,6 @@ use IPC::PidStat;
 
 #======================================================================
 
-our @Orig_Argv = @ARGV;
 our @Opt_FgArgv;
 our $Opt_Locklist;
 
@@ -115,7 +114,7 @@ print "Child exiting\n" if $Debug;
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Id:$ ', "\n";
+    print '$Id$ ', "\n";
     pod2usage(-verbose=>2, -exitval => 2);
     exit (1);
 }
