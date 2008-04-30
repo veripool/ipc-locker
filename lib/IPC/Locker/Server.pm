@@ -41,7 +41,7 @@ The port number (INET) or name (UNIX) of the lock server.  Defaults to
 
 =head1 DISTRIBUTION
 
-The latest version is available from CPAN and from L<http://www.veripool.com/>.
+The latest version is available from CPAN and from L<http://www.veripool.org/>.
 
 Copyright 1999-2008 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU

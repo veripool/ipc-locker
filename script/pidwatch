@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# $Id:$
+# $Id$
 # See copyright, etc in below POD section.
 ######################################################################
 
@@ -149,7 +149,7 @@ while (1) {
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Id:$ ', "\n";
+    print '$Id$ ', "\n";
     pod2usage(-verbose=>2, -exitval => 2);
     exit (1);
 }
@@ -262,7 +262,7 @@ Signal number/name to send to process on remote PIDs death.  Defaults to
 
 =head1 DISTRIBUTION
 
-The latest version is available from CPAN and from L<http://www.veripool.com/>.
+The latest version is available from CPAN and from L<http://www.veripool.org/>.
 
 Copyright 2002-2008 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
