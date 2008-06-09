@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id$
 # See copyright, etc in below POD section.
 ######################################################################
 
@@ -8,11 +7,13 @@ use lib '../blib/lib';        # testing
 use Getopt::Long;
 use Pod::Usage;
 use strict;
-use vars qw ($Debug);
+use vars qw ($Debug $VERSION);
 
 use lib "/usr/lib/nagios/plugins" ;
 use utils qw(%ERRORS &print_revision &support &usage);
 use IPC::PidStat;
+
+$VERSION = '1.481';
 
 #======================================================================
 # main
@@ -42,14 +43,14 @@ check_pidstatd(%opt_req_params);
 #----------------------------------------------------------------------
 
 sub print_usage {
-    print_revision($PROGNAME, '$Id$');
+    print_revision($PROGNAME, $VERSION);
     pod2usage(-verbose=>2, -exitval => 2);
     support();
     exit $ERRORS{'OK'};
 }
 
 sub version {
-    print_revision($PROGNAME, '$Id$');
+    print_revision($PROGNAME, $VERSION);
     exit $ERRORS{'OK'};
 }
 
@@ -64,7 +65,7 @@ sub check_pidstatd {
     my %params = (tries=>5,	# One second timeout
 		  pid => 1,	# Init process should always exist
 		  @_);
-    
+
     # Config requestor
     my $exister = new IPC::PidStat (%params);
 

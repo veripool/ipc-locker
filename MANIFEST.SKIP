@@ -1,6 +1,6 @@
 ^CVS/
 /CVS/
-.cvsignore$
+^.git/
 pm_to_blib$
 ,v$
 \.(bak|new|old)$

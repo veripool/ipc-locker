@@ -150,7 +150,6 @@ The contributors that suggested a given feature are shown in [].
 ***	Fixed bug where lock expiration timer would fire at wrong time
 
 ----------------------------------------------------------------------
-$Id$
 DESCRIPTION: Documentation on change history for this package
 ----------------------------------------------------------------------
 

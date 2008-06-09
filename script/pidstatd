@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id$
 # See copyright, etc in below POD section.
 ######################################################################
 
@@ -88,14 +87,13 @@ sub sig_HUP {
 ######################################################################
 
 sub usage {
-    print '$Id$ ', "\n";
+    print "Version: $IPC::PidStat::VERSION\n";
     pod2usage(-verbose=>2, -exitval => 2);
     exit(1);
 }
 
 sub version {
-    print 'Version: $Id$ ';
-    print "\n";
+    print "Version: $IPC::PidStat::VERSION\n";
     exit (1);
 }
 

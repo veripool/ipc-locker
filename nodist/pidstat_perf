@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id$
 # See copyright, etc in below POD section.
 ######################################################################
 use lib './blib/lib';	# testing
@@ -62,7 +61,6 @@ print "End\n" if $Debug;
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Id$ ', "\n";
     pod2usage(-verbose=>2, -exitval => 2);
     exit (1);
 }

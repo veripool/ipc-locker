@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id$
 # See copyright, etc in below POD section.
 ######################################################################
 
@@ -33,7 +32,7 @@ if (!GetOptions (
 		 "version"	=> \&version,
 		 "port=i"	=> sub {$server_params{port} = $_[1];},
 		 "path=s"	=> sub {$server_params{port} = $_[1];
-    	    	    		        $server_params{family}='UNIX';},
+					$server_params{family}='UNIX';},
 		 "fork!"	=> \$opt_fork,
 		 )) {
     die "%Error: Bad usage, try 'lockerd --help'\n";
@@ -70,14 +69,12 @@ sub sig_HUP {
 ######################################################################
 
 sub usage {
-    print '$Id$ ', "\n";
     pod2usage(-verbose=>2, -exitval => 2);
     exit(1);
 }
 
 sub version {
-    print 'Version: $Id$ ';
-    print "\n";
+    print "Version: $IPC::Locker::VERSION\n";
     exit (1);
 }
 
@@ -129,7 +126,7 @@ Specifies the port number to be used.
 
 Specifies that UNIX FIFO will be used for communications with clients and
 the path to the FIFO.
-  
+
 =item --version
 
 Displays program version and exits.

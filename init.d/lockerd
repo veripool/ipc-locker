@@ -1,5 +1,4 @@
 #!/bin/sh
-# $Id$
 # DESCRIPTION: Sample file to place in /etc/init.d to start the daemon
 # Distributed with IPC::Locker
 #
@@ -49,7 +48,7 @@ case $state in
 	;;
   status)
         if test "x`pidof -o $$ -o $PPID -x lockerd`" != x; then
-  	        ps f -ww `pidof -o $$ -o $PPID -x lockerd`
+	        ps f -ww `pidof -o $$ -o $PPID -x lockerd`
         fi
 	exit 0
 	;;

@@ -1,4 +1,3 @@
-# $Id$
 # See copyright, etc in below POD section.
 ######################################################################
 
@@ -114,7 +113,7 @@ sub new {
     my $param = {@_};
     if (defined $param->{family} && $param->{family} eq 'UNIX'
 	&& !exists($param->{port})) {
-    	$self->{port} = $IPC::Locker::Default_UNIX_port;
+	$self->{port} = $IPC::Locker::Default_UNIX_port;
     }
     return $self;
 }
@@ -126,19 +125,19 @@ sub start_server {
     _timelog("Listening on $self->{port}\n") if $Debug;
     my $server;
     if ($self->{family} eq 'INET') {
-    	$server = IO::Socket::INET->new( Proto     => 'tcp',
+	$server = IO::Socket::INET->new( Proto     => 'tcp',
 					 LocalPort => $self->{port},
 					 Listen    => SOMAXCONN,
 					 Reuse     => 1)
 	    or die "$0: Error, socket: $!";
     } elsif ($self->{family} eq 'UNIX') {
-    	$server = IO::Socket::UNIX->new(Local => $self->{port},
+	$server = IO::Socket::UNIX->new(Local => $self->{port},
 					Listen    => SOMAXCONN,
 					Reuse     => 1)
 	    or die "$0: Error, socket: $!\n port=$self->{port}=";
 	$self->{unix_socket_created}=1;
     } else {
-    	die "IPC::Locker::Server:  What transport do you want to use?";
+	die "IPC::Locker::Server:  What transport do you want to use?";
     }
     $Poll = IO::Poll->new();
     $Poll->mask($server => (POLLIN | POLLERR | POLLHUP | POLLNVAL));
@@ -159,7 +158,7 @@ sub start_server {
 	my (@r, @w, @e);
 
 	my $timeout = ((scalar keys %Locks) ? $PollDelta : 2000);
-    	my $npolled = $Poll->poll($timeout);
+	my $npolled = $Poll->poll($timeout);
 	if ($npolled>0) {
 	    @r = $Poll->handles(POLLIN);
 	    @e = $Poll->handles(POLLERR | POLLHUP | POLLNVAL);
@@ -168,9 +167,9 @@ sub start_server {
 	_timelog("Poll $npolled Locks=",(scalar keys %Locks),": $#r $#w $#e $!\n") if $Debug;
         foreach my $fh (@r) {
             if ($fh == $server) {
-        	# Create a new socket
-        	my $clientfh = $server->accept;
-        	$Poll->mask($clientfh => (POLLIN | POLLERR | POLLHUP | POLLNVAL));
+		# Create a new socket
+		my $clientfh = $server->accept;
+		$Poll->mask($clientfh => (POLLIN | POLLERR | POLLHUP | POLLNVAL));
 		#
 		my $clientvar = {socket=>$clientfh,
 				 input=>'',
@@ -185,18 +184,18 @@ sub start_server {
 		my $data = '';
 		my $rc = recv($fh, $data, 1000, 0);
 		if ($data eq '') {
-        	    # we have finished with the socket
+		    # we have finished with the socket
 		    delete $Clients{$fh};
-        	    $Poll->remove($fh);
-        	    $fh->close;
- 		} else {
+		    $Poll->remove($fh);
+		    $fh->close;
+		} else {
 		    my $line = $Clients{$fh}->{input}.$data;
 		    my @lines = split /\n/, $line;
 		    if ($line =~ /\n$/) {
-		    	$Clients{$fh}->{input}='';
+			$Clients{$fh}->{input}='';
 			_timelog("Nothing Left\n") if $Debug;
 		    } else {
-		    	$Clients{$fh}->{input}=pop @lines;
+			$Clients{$fh}->{input}=pop @lines;
 			_timelog("Left: ".$Clients{$fh}->{input}."\n") if $Debug;
 		    }
 		    client_service($Clients{$fh}, \@lines);
@@ -697,7 +696,7 @@ sub DESTROY {
     my $self = shift;
     _timelog("DESTROY\n") if $Debug;
     if (($self->{family} eq 'UNIX') && $self->{unix_socket_created}){
-    	unlink $self->{port};
+	unlink $self->{port};
     }
 }
 

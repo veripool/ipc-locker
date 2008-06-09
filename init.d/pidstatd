@@ -1,5 +1,4 @@
 #!/bin/sh
-# $Id$
 # DESCRIPTION: Sample file to place in /etc/init.d to start the daemon
 # Distributed with IPC::Locker
 #
@@ -30,7 +29,7 @@ prog=/usr/local/bin/pidstatd
 case $state in
   start)
 	if [ $EUID != 0 ]; then
-	    echo "Run as root, only root can do kill 0's"  
+	    echo "Run as root, only root can do kill 0's"
 	    exit 10
 	fi
 	if [ -f $prog ]; then
@@ -56,7 +55,7 @@ case $state in
 	;;
   status)
         if test "x`pidof -o $$ -o $PPID -x pidstatd`" != x; then
-  	        ps f -ww `pidof -o $$ -o $PPID -x pidstatd`
+	        ps f -ww `pidof -o $$ -o $PPID -x pidstatd`
         fi
 	exit 0
 	;;

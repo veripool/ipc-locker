@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id$
 # See copyright, etc in below POD section.
 ######################################################################
 
@@ -114,7 +113,7 @@ print "Child exiting\n" if $Debug;
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Id$ ', "\n";
+    print "Version: $IPC::Locker::VERSION\n";
     pod2usage(-verbose=>2, -exitval => 2);
     exit (1);
 }
@@ -132,7 +131,7 @@ sub parameter {
 	die "%Error: Unknown option: $param\n";
     }
 }
- 
+
 #######################################################################
 
 sub locklist {

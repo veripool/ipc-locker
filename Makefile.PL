@@ -1,4 +1,3 @@
-# $Id$
 # DESCRIPTION: Perl ExtUtils: Type 'perl Makefile.PL' to create a Makefile for this package
 #
 # Copyright 1999-2008 by Wilson Snyder.  This program is free software;
@@ -35,7 +34,7 @@ tag:
 	svnorcvs tag  \$(DISTNAME)_\$(VERSION_SYM)
 
 maintainer-diff:
-	svnorcvs diff \$(DISTNAME)_\$(VERSION_SYM) 
+	svnorcvs diff \$(DISTNAME)_\$(VERSION_SYM)
 
 maintainer-dist: preexist dist tag
 	svnorcvs release \$(DISTVNAME).tar.gz
@@ -64,7 +63,7 @@ WriteMakefile(
 				script/pidwatch
 				script/uriexec )],
 	      'dist'    => {COMPRESS => 'gzip -9f',
-			    SUFFIX   => '.gz', 
+			    SUFFIX   => '.gz',
 			    DIST_DEFAULT => 'README all tardist',
 			},
 	      );

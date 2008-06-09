@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id$
 # See copyright, etc in below POD section.
 ######################################################################
 
@@ -149,7 +148,7 @@ while (1) {
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Id$ ', "\n";
+    print "Version: $IPC::PidStat::VERSION\n";
     pod2usage(-verbose=>2, -exitval => 2);
     exit (1);
 }
@@ -167,7 +166,7 @@ sub parameter {
 	die "%Error: Unknown option: $param\n";
     }
 }
- 
+
 #######################################################################
 __END__
 

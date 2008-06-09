@@ -14,11 +14,11 @@
 This is the IPC::Locker Perl Package.
 
 @menu
-* Copyright::                   
-* Description::                 
-* Obtaining Distribution::      
-* Supported Systems::           
-* Installation::                
+* Copyright::
+* Description::
+* Obtaining Distribution::
+* Supported Systems::
+* Installation::
 @end menu
 
 @node Copyright, Description, Top, Top
@@ -93,7 +93,7 @@ and pidstatd.  See the Nagios documentation
 @node Obtaining Distribution, Supported Systems, Description, Top
 @section Obtaining Distribution
 
-The latest version is available at 
+The latest version is available at
 @uref{http://www.perl.org/CPAN/}
 
 Download the latest package from that site, and decompress.

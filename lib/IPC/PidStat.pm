@@ -1,4 +1,3 @@
-# $Id$
 # See copyright, etc in below POD section.
 ######################################################################
 #
@@ -130,14 +129,14 @@ sub pid_request_recv {
 	return @recved if defined $recved[0];
     }
     return undef;
-}   
+}
 
 ######################################################################
 #### Status checking
 
 sub ping_status {
     my $self = shift;
-    my %params = (pid => 1, 	# Init.
+    my %params = (pid => 1,	# Init.
 		  host => $self->{host},
 		  @_,
 		  );

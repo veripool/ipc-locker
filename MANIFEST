@@ -1,3 +1,4 @@
+.gitignore
 Changes
 COPYING
 init.d/lockerd

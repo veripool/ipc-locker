@@ -1,4 +1,3 @@
-# $Id$
 # See copyright, etc in below POD section.
 ######################################################################
 
@@ -477,9 +476,9 @@ sub _request {
 	    or croak "%Error: Can't locate lock server on $self->{port}.\n"
 		. "\tYou probably need to run lockerd\n$self->_request(): Stopped";
     } else {
-    	croak "IPC::Locker->_request(): No or wrong transport specified.";
+	croak "IPC::Locker->_request(): No or wrong transport specified.";
     }
-    
+
     $self->{lock_list} = [];
 
     print $fh "$req\n";
@@ -498,7 +497,7 @@ sub _request {
 	}
 	if ($cmd eq 'lock' && @args == 2) {
 	    push @{$self->{lock_list}}, @args;
- 	}
+	}
 	if ($cmd eq "autounlock_check") {
 	    # See if we can break the lock because the lock holder ran on this same machine.
 	    my ($lname,$lhost,$lpid,$supports_dead) = @args;

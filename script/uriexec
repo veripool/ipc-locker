@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id$
 # See copyright, etc in below POD section.
 ######################################################################
 
@@ -9,7 +8,7 @@ use Getopt::Long;
 use Cwd qw();
 
 use strict;
-use vars qw(@CmdParts);
+use vars qw(@CmdParts $VERSION);
 
 #======================================================================
 # main
@@ -61,7 +60,7 @@ die "%Error: uriexec: exec failed: '".join(' ',@cmds),"\n";
 
 sub usage {
     eval 'use Pod::Usage;';
-    print '$Id$\n';
+    print "Version: $VERSION\n";
     pod2usage(-verbose=>2, -exitval => 2);
     exit (1);
 }
