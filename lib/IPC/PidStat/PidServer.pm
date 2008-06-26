@@ -56,7 +56,7 @@ sub start_server {
 	print "Got msg $in_msg\n" if $Debug;
 	my ($cmd,@param) = split /\s+/, $in_msg;  # We rely on the newline to terminate the split
 	# We ignore unknown parameters for forward compatibility
-	# PIDR (\d+) (\S+) ([0123])	# PID request, format after 1.480
+	# PIDR (\d+) (\S+) ([0-7])	# PID request, format after 1.480
 	# PIDR (\d+) (\S+)		# PID request, format after 1.461
 	# PIDR (\d+)			# PID request, format before 1.461
 	if ($cmd eq 'PIDR') {
