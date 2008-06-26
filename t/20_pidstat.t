@@ -9,10 +9,11 @@
 
 use lib "./blib/lib";
 use Test;
+use Sys::Hostname;
 use strict;
 use vars qw (%SLArgs $Serv_Pid);
 
-BEGIN { plan tests => 14 }
+BEGIN { plan tests => 17 }
 BEGIN { require "t/test_utils.pl"; }
 
 END { kill 'TERM', $Serv_Pid; }
@@ -53,11 +54,23 @@ my $exister = new IPC::PidStat
 ok ($exister);
 
 # Send request and check return
-ok (check_stat($exister,1234));
+# These will (probably) use the local path, not the daemon
+ok (check_stat($exister, 'localhost', 1234));
 
-ok (check_stat($exister,66666));
+ok (check_stat($exister, 'localhost', 66666));
 
-ok (check_stat($exister,$$));
+ok (check_stat($exister, 'localhost', $$));
+
+# Send request and check return
+# These will use the remote path
+$IPC::PidStat::Hostname = 'non matching host name';  # Hack so we go remotely
+
+ok (check_stat($exister, hostname(), 1234));
+
+ok (check_stat($exister, hostname(), 66666));
+
+ok (check_stat($exister, hostname(), $$));
+
 
 # Destructor
 undef $exister;
@@ -100,6 +113,7 @@ if (!-d "/usr/lib/nagios/plugins") {
 
 sub check_stat {
     my $exister = shift;
+    my $host = shift;
     my $pid = shift;
 
     my $tries = 5;   # Number of messages to send.  We'll hope one gets
@@ -107,7 +121,7 @@ sub check_stat {
     # certain.
 
     my $pid_pre_exists = kill(0,$pid);
-    my @recved = $exister->pid_request_recv(pid=>$pid);
+    my @recved = $exister->pid_request_recv(pid=>$pid,host=>$host);
     my $pid_post_exists = kill(0,$pid);  # Test again, may have changed state when request in flight.
     if (!defined $recved[0]) {
 	warn "\n%Error: Null response for pid $pid: @recved,";

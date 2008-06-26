@@ -19,11 +19,14 @@ use IPC::Locker;
 use Socket;
 use Time::HiRes qw(gettimeofday tv_interval);
 use IO::Socket;
+use Sys::Hostname;
 use POSIX;
 
 use strict;
-use vars qw($VERSION $Debug);
+use vars qw($VERSION $Debug $Stat_Of_Pid_Supported $Hostname);
 use Carp;
+
+our @_Local_Responses;
 
 ######################################################################
 #### Configuration Section
@@ -32,6 +35,11 @@ use Carp;
 $Debug = 0;
 
 $VERSION = '1.481';
+
+# True if pid existance can be detected by looking at /proc filesystem
+$Stat_Of_Pid_Supported = -e "/proc/1";
+
+$Hostname = hostname();
 
 ######################################################################
 #### Creator
@@ -79,30 +87,42 @@ sub pid_request {
 
     $self->open_socket();  #open if not already
 
-    my $reqval = (($params{return_exist}?1:0)
-		  | ($params{return_doesnt}?2:0)
-		  | ($params{return_unknown}?4:0));
-    my $out_msg = "PIDR $params{pid} $params{host} $reqval\n";
-
-    my $ipnum = $self->{_host_ips}->{$params{host}};
-    if (!$ipnum) {
-	# inet_aton("name") calls gethostbyname(), which chats with the
-	# NS cache socket and NIS server.  Too costly in a polling loop.
-	$ipnum = inet_aton($params{host})
-	    or die "%Error: Can't find host $params{host}\n";
-	$self->{_host_ips}->{$params{host}} = $ipnum;
+    if ($params{host} eq 'localhost' || $params{host} eq $Hostname) {
+	# No need to go via server, instead check locally
+	my $res = $self->_local_response($params{pid}, $params{host});
+	push @_Local_Responses, $res;
     }
-    my $dest = sockaddr_in($self->{port}, $ipnum);
-    $self->fh->send($out_msg,0,$dest);
+    else {
+	my $reqval = (($params{return_exist}?1:0)
+		      | ($params{return_doesnt}?2:0)
+		      | ($params{return_unknown}?4:0));
+	my $out_msg = "PIDR $params{pid} $params{host} $reqval\n";
+
+	my $ipnum = $self->{_host_ips}->{$params{host}};
+	if (!$ipnum) {
+	    # inet_aton("name") calls gethostbyname(), which chats with the
+	    # NS cache socket and NIS server.  Too costly in a polling loop.
+	    $ipnum = inet_aton($params{host})
+		or die "%Error: Can't find host $params{host}\n";
+	    $self->{_host_ips}->{$params{host}} = $ipnum;
+	}
+	my $dest = sockaddr_in($self->{port}, $ipnum);
+	$self->fh->send($out_msg,0,$dest);
+    }
 }
 
 sub recv_stat {
     my $self = shift;
 
     my $in_msg;
-    $self->fh->recv($in_msg, 8192)
-	or return undef;
-    print "Got response $in_msg\n" if $Debug;
+    if ($#_Local_Responses >= 0) {
+	$in_msg = shift @_Local_Responses;
+	print "Got local response $in_msg\n" if $Debug;
+    } else {
+	$self->fh->recv($in_msg, 8192)
+	    or return undef;
+	print "Got server response $in_msg\n" if $Debug;
+    }
     if ($in_msg =~ /^EXIS (\d+) (\d+) (\S+)/) {  # PID server response
 	my $pid=$1;  my $exists = $2;  my $hostname = $3;
 	print "   Pid $pid Exists on $hostname? $exists\n" if $Debug;
@@ -155,6 +175,24 @@ sub ping_status {
 }
 
 ######################################################################
+#### Local messages
+
+sub _local_response {
+    my $self = shift;
+    my $pid = shift;
+    my $host = shift;
+
+    my $exists = IPC::PidStat::local_pid_exists($pid);
+    if ($exists) {
+	return "EXIS $pid $exists $host";  # PID response
+    } elsif (defined $exists) {  # Known not to exist
+	return "EXIS $pid $exists $host";  # PID response
+    } else {  # Perhaps we're not running as root?
+	return "UNKN $pid na $host";  # PID response
+    }
+}
+
+######################################################################
 #### Utilities
 
 sub local_pid_doesnt_exist {
@@ -172,8 +210,14 @@ sub local_pid_exists {
     $! = undef;
     my $exists = (kill (0,$pid))?1:0;
     if ($!) {
-	$exists = undef;
-	$exists = 0 if $! == POSIX::ESRCH;
+	if ($! == POSIX::ESRCH) {
+	    $exists = 0;
+	} elsif ($! == POSIX::EPERM	# Sigh, different user?
+		 && $Stat_Of_Pid_Supported ) { # This system supports /proc
+	    $exists = (-e "/proc/$pid") ? 1:0;
+	} else {
+	    $exists = undef;  # Unknown reason
+	}
     }
     return $exists;
 }
