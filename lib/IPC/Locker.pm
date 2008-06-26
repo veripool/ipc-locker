@@ -214,7 +214,6 @@ require 5.004;
 require Exporter;
 @ISA = qw(Exporter);
 
-use Net::Domain;
 use Socket;
 use Time::HiRes qw(gettimeofday tv_interval);
 use IO::Socket;
@@ -281,11 +280,8 @@ sub new {
 ######################################################################
 #### Static Accessors
 
-our $_Hostfqdn;
 sub hostfqdn {
-    # Return hostname() including domain name
-    $_Hostfqdn = Net::Domain::hostfqdn() if !defined $_Hostfqdn;
-    return $_Hostfqdn;
+    return IPC::PidStat::hostfqdn();
 }
 
 ######################################################################

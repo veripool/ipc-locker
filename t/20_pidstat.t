@@ -63,7 +63,7 @@ ok (check_stat($exister, 'localhost', $$));
 
 # Send request and check return
 # These will use the remote path
-$IPC::PidStat::Hostname = 'non matching host name';  # Hack so we go remotely
+%IPC::PidStat::Local_Hostnames = ();  # Hack so we go remotely
 
 ok (check_stat($exister, hostname(), 1234));
 

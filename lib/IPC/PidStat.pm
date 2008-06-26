@@ -20,10 +20,11 @@ use Socket;
 use Time::HiRes qw(gettimeofday tv_interval);
 use IO::Socket;
 use Sys::Hostname;
+use Net::Domain;
 use POSIX;
 
 use strict;
-use vars qw($VERSION $Debug $Stat_Of_Pid_Supported $Hostname);
+use vars qw($VERSION $Debug $Stat_Of_Pid_Supported %Local_Hostnames);
 use Carp;
 
 our @_Local_Responses;
@@ -39,7 +40,9 @@ $VERSION = '1.481';
 # True if pid existance can be detected by looking at /proc filesystem
 $Stat_Of_Pid_Supported = -e "/proc/1";
 
-$Hostname = hostname();
+%Local_Hostnames = ('localhost' => 1,
+		    hostname() => 1,
+		    hostfqdn() => 1);
 
 ######################################################################
 #### Creator
@@ -87,12 +90,15 @@ sub pid_request {
 
     $self->open_socket();  #open if not already
 
-    if ($params{host} eq 'localhost' || $params{host} eq $Hostname) {
+    my $res;
+    if ($Local_Hostnames{$params{host}}) {
 	# No need to go via server, instead check locally
 	my $res = $self->_local_response($params{pid}, $params{host});
-	push @_Local_Responses, $res;
+	push @_Local_Responses, $res if $res;
+	# If unknown (undef response), forward to the server
     }
-    else {
+
+    if (!defined $res) {
 	my $reqval = (($params{return_exist}?1:0)
 		      | ($params{return_doesnt}?2:0)
 		      | ($params{return_unknown}?4:0));
@@ -188,8 +194,18 @@ sub _local_response {
     } elsif (defined $exists) {  # Known not to exist
 	return "EXIS $pid $exists $host";  # PID response
     } else {  # Perhaps we're not running as root?
-	return "UNKN $pid na $host";  # PID response
+	return undef;
     }
+}
+
+######################################################################
+#### Static Accessors
+
+our $_Hostfqdn;
+sub hostfqdn {
+    # Return hostname() including domain name
+    $_Hostfqdn = Net::Domain::hostfqdn() if !defined $_Hostfqdn;
+    return $_Hostfqdn;
 }
 
 ######################################################################
