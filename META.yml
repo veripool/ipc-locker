@@ -1,7 +1,7 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         IPC-Locker
-version:      1.481
+version:      1.482
 version_from: lib/IPC/Locker.pm
 license:      perl
 installdirs:  site

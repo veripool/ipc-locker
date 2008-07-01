@@ -13,7 +13,7 @@ use lib "/usr/lib/nagios/plugins" ;
 use utils qw(%ERRORS &print_revision &support &usage);
 use IPC::Locker;
 
-$VERSION = '1.481';
+$VERSION = '1.482';
 
 #======================================================================
 # main

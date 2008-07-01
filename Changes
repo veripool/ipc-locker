@@ -2,7 +2,7 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
-* IPC::Locker 1.48*
+* IPC::Locker 1.482 2008/07/01
 
 ***	Don't require pidstatd for pidwatch'es on localhost. [Bryce Denney]
 
