@@ -1,0 +1,391 @@
+#!/usr/bin/perl -w
+# See copyright, etc in below POD section.
+######################################################################
+
+use lib './blib/lib';	# testing
+use lib '../blib/lib';	# testing
+use lib "$ENV{W}/hw/utils/perltools/Parallel-Forker/lib";
+
+require 5.006_001;
+
+use Getopt::Long;
+use Data::Dumper; $Data::Dumper::Indent=1; #Debug
+use IPC::Locker;
+use Cache::FastMmap;
+use Pod::Usage;
+use Time::HiRes;
+use Sys::Hostname;
+use Parallel::Forker;
+use Storable qw( freeze thaw );
+use strict;
+use vars qw ($Debug $oldowner);
+
+our $Parent_Pid = $$;
+
+#======================================================================
+
+our $Opt_Host = $ENV{IPCLOCKER_HOST};
+our $Opt_Runtime = 10;
+our $Opt_MaxReq;
+our $Opt_Threads = 30;
+our $Opt_NumLocks = 3;   # Locks in flight at once
+
+our $ChildPeriod = 0.01;  # Seconds
+our $Opt_Kill_Period = 0.1; # Seconds
+
+#======================================================================
+# main
+
+autoflush STDOUT 1;
+autoflush STDERR 1;
+Getopt::Long::config ("no_auto_abbrev");
+if (! GetOptions (
+		  "help"	=> \&usage,
+		  "debug"	=> sub { $Debug=1; $IPC::Locker::Debug = 1;},
+		  "<>"		=> \&parameter,
+		  "host=s"	=> \$Opt_Host,
+		  "runtime=i"	=> \$Opt_Runtime,
+		  "maxreq=i"	=> \$Opt_MaxReq,
+		  "threads=i"	=> \$Opt_Threads,
+		  )) {
+    die "%Error: Bad usage, try 'locker_stress --help'\n";
+}
+
+srand();
+
+Time::HiRes::usleep (rand() * 1e6);
+timelog("Start\n") if $Debug;
+stress();
+timelog("End\n") if $Debug;
+
+#----------------------------------------------------------------------
+
+sub usage {
+    pod2usage(-verbose=>2, -exitval => 2);
+    exit (1);
+}
+
+sub parameter {
+    my $param = shift;
+    die "%Error: Unknown parameter: $param\n";
+}
+
+#######################################################################
+
+sub stress {
+
+    my $fork = new Parallel::Forker (use_sig_child=>1);
+    $SIG{CHLD} = sub { Parallel::Forker::sig_child($fork); };
+
+    my $totals = { aquireds => 0,
+		   requests => 0,
+		   kills => 0,
+	       };
+
+    my %Children;
+    timelog("Starting Loop\n");
+    
+    my $cache = Cache::FastMmap->new();
+    $cache->set('winddown',0);
+
+    my $st_time = fractime();
+    my $winddown;
+    my $nextkill = $st_time + 1;
+    while (1) {
+	my $time = fractime();
+	if (($Opt_MaxReq && $totals->{aquireds} >= $Opt_MaxReq)
+	    || ($Opt_Runtime && ($time > ($Opt_Runtime+$st_time)))
+	    || $winddown) {
+	    if (!$winddown) {
+		timelog("Entering winddown phase\n");
+		$winddown = $time;
+		$cache->set('winddown',1);
+	    }
+	    if ($time > ($winddown+10)
+		|| $fork->running == 0) {
+		last;
+	    }
+	}
+	if ($fork->running < $Opt_Threads && !$winddown) {
+
+	    my $proc = $fork->schedule
+		(
+		 run_on_start => sub {
+		     child_loop($cache);
+		 },
+		 run_on_finish => sub {
+		     my $id = $_[0]->{child_key} or die;
+		     timelog("Child done $Children{$id}{pid}\n");
+		     _grab_stats($totals, $cache, $id);
+		     delete $Children{$id};
+		 },
+		 );
+	    $proc->run();
+
+	    my $id = $proc->{pid};
+	    $proc->{child_key} = $id;
+	    $totals->{forks}++;
+
+	    $Children{$id} = {
+		id => $id,
+		pid => $proc->{pid},
+	    };
+	}
+	if ($time >= $nextkill) {
+	    $nextkill = $time + $Opt_Kill_Period;
+	    my @allprocs = $fork->processes;
+	    my @procs;
+	    my %haslock;
+	    if (rand(100) > 50) {
+		# 50% kill a process with a lock, vs any process
+		for (my $locknum=0; $locknum < $Opt_NumLocks; $locknum++) {
+		    if (my $id = $cache->get(lockname($locknum))) {
+			foreach my $proc (@allprocs) {
+			    if ($proc->{child_key} == $id) {
+				#timelog("LL3 $locknum $id $proc\n");
+				push @procs, $proc;
+				$haslock{$id} = lockname($locknum);
+			    }
+			}
+		    }
+		}
+	    }
+	    @procs = @allprocs if !$procs[0];
+	    if (my $proc = $procs[int(rand($#procs))]) {
+		if ($proc->is_running) {
+		    my $id = $proc->{child_key} or die;
+		    $totals->{kills}++;
+		    $cache->set("pidlive_$id", 0);  # Prevent race between closing and pid going away
+		    timelog("Child kill $id ".($haslock{$id}||'')."\n");
+		    $proc->kill(9);
+		}
+	    }
+	}
+	$fork->poll;
+	Time::HiRes::usleep (0.01 * 1e6);
+    }
+    my $delta_time = fractime() - $st_time;
+
+    timelog("Loop done, killing\n");
+    $fork->kill_all();
+    $fork->wait_all();
+    timelog("Children all exited\n");
+
+    foreach my $key (sort keys %{$totals}) {
+	printf "   total %10s: %d\n", $key, $totals->{$key};
+    }
+
+    printf "%s, reqs %d, req/sec %5.3f\n"
+	, '"'.hostname().'"'
+	, $totals->{requests}
+	, $totals->{requests}/$delta_time;
+}
+
+sub _grab_stats {
+    my $totals = shift;
+    my $cache = shift;
+    my $id = shift;
+
+    if (my $fetch = $cache->get($id)) {
+	my $hash = thaw ( $fetch );
+	if ($hash && ref $hash) {
+	    print Dumper($hash) if $Debug;
+	    foreach my $key (keys %{$hash}) {
+		$totals->{$key} += $hash->{$key};
+	    }
+	}
+    }
+}
+
+######################################################################
+
+sub child_loop {
+    my $cache = shift;
+
+    my $id = $$;
+    my $lockname = lockname($id % $Opt_NumLocks);
+
+    my $stats = {
+	requests => 0,
+	aquireds => 0,
+	releases => 0,
+    };
+
+    timelog("Child created, access $lockname\n");
+    $cache->set("pidlive_$id", 1);
+    srand;
+
+    my $lock = IPC::Locker->new (host=>$Opt_Host,
+				 lock=>$lockname,
+				 autounlock=>1,);
+
+    my $abort;
+    while (1) {
+	my $action = rand(1000) % 100;
+	if (($action -= 5) < 0) {  # 5% of time just exit without release
+	    $abort = 1;
+	    last;
+	}
+	elsif (($action -= 5) < 0) {  # 5% of time exit nicely
+	    last;
+	}
+	elsif (($action -= 20) < 0) {  # 20% of time get lock
+	    $stats->{requests}++;
+	    if (!$lock->locked) {
+		timelog("$lockname: Requested\n");
+		$lock->lock;
+		timelog("$lockname: Aquired\n");
+		$stats->{aquireds}++;
+
+		local $oldowner;
+		my $newowner = $cache->get_and_set
+		    ($lockname, sub { $oldowner=$_[1]; $id; });
+		$oldowner = cleanup_death($cache,$oldowner);
+		if ($oldowner) {
+		    timelog("%Error: $lockname aquired, but $oldowner already had it\n");
+		    $stats->{errors}++;
+		}
+	    }
+	}
+	elsif (($action -= 20) < 0) {  # 20% of time release lock
+	    $stats->{requests}++;
+	    if ($lock->locked) {
+		local $oldowner;
+		my $newowner = $cache->get_and_set
+		    ($lockname, sub { $oldowner=$_[1]; $_[1]==$id ? 0 : $_[1]; });
+		if (!$oldowner) {
+		    timelog("%Error: $lockname about to be released, but not owned\n");
+		    $stats->{errors}++;
+		} elsif ($oldowner != $id) {
+		    timelog("%Error: $lockname about to be released, owned by differend id: $oldowner\n");
+		    $stats->{errors}++;
+		}
+		timelog("$lockname: Unlock\n");
+		$lock->unlock;
+		$stats->{releases}++;
+	    }
+	}
+	# Defaults
+	elsif ($cache->get('winddown')) {
+	    timelog("Winddown requested\n");
+	    last;
+	}
+	else {
+	    Time::HiRes::usleep ($ChildPeriod*rand(1000)*1000);  # else wait
+	}
+    }
+
+    # Send stats up to parent
+    $cache->set("pidlive_$id", 0);  # Prevent race between closing and pid going away
+    $cache->set($id, freeze($stats));
+
+    timelog("Child done\n") if !$abort;
+    timelog("Child aborting\n") if $abort;
+
+    POSIX::_exit 0 if $abort;
+    exit 0;
+}
+
+sub cleanup_death {
+    my $cache = shift;
+    my $owner = shift;
+    return $owner if !$owner;
+    my $exists = IPC::PidStat::local_pid_exists($owner);
+    if ($exists == 0) {
+	timelog("Detected old owner $owner now dead, RIP\n");
+	return 0;
+    } elsif (!$cache->get("pidlive_$owner")) {
+	timelog("Detected old owner $owner in shutdown mode\n");
+	return 0;
+    } else {
+	return $owner;
+    }
+}
+
+######################################################################
+
+sub lockname {
+    return sprintf("testlock_%02d", $_[0]);
+}
+
+sub fractime {
+    my ($time, $time_usec) = Time::HiRes::gettimeofday();
+    return $time + $time_usec * 1e-6;
+}
+
+sub timelog {
+    my $msg = join('',@_);
+    my ($time, $time_usec) = Time::HiRes::gettimeofday();
+    my ($sec,$min,$hour,$mday,$mon) = localtime($time);
+    printf +("[%02d:%02d:%02d.%06d] %5s: %s",
+	     $hour, $min, $sec, $time_usec,
+	     ($$ == $Parent_Pid ? 'top' : sprintf("%05d",$$)), $msg);
+}
+
+#######################################################################
+__END__
+
+=pod
+
+=head1 NAME
+
+locker_stress -
+
+=head1 SYNOPSIS
+
+locker_stress --host 10.4.0.28
+
+=head1 DESCRIPTION
+
+Stress test IPC::Locker.
+
+=head1 ARGUMENTS
+
+=over 4
+
+=item --help
+
+Displays this message and program version and exits.
+
+=item --host
+
+Hostname to ping.
+
+=item --persec
+
+Requests per second to launch.
+
+=item --pid
+
+PID to ping.
+
+=item --runtime
+
+Number of seconds to run for.
+
+=item --startminute
+
+Minute-hand time to start at, to insure all jobs are simultanious.
+
+=back
+
+=head1 DISTRIBUTION
+
+The latest version is available from CPAN and from L<http://www.veripool.org/>.
+
+Copyright 2008-2008 by Wilson Snyder.  This package is free software; you
+can redistribute it and/or modify it under the terms of either the GNU
+Lesser General Public License or the Perl Artistic License.
+
+=head1 AUTHORS
+
+Wilson Snyder <wsnyder@wsnyder.org>
+
+=head1 SEE ALSO
+
+=cut
+
+######################################################################
+### Local Variables:
+### compile-command: "./locker_stress --host localhost"
+### End:

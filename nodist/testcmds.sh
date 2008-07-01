@@ -3,6 +3,7 @@ make && script/lockerd --nofork --debug
 
 # Performance profiling
 make && perl -d:DProf script/lockerd --nofork --debug
+make && ./locker_stress --host dualcore
 
 # Performance test.  Use a IP number, not name
 # $SCB/slrsh --parallel --hosts 'srv040 srv041 srv042 srv043 srv044 srv045 srv046 srv047 srv048 srv049 srv050 srv051 srv052 srv053 srv054 srv055 srv056 srv057 srv058 srv059'
