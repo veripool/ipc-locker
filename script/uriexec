@@ -10,6 +10,8 @@ use Cwd qw();
 use strict;
 use vars qw(@CmdParts $VERSION);
 
+$VERSION = '1.481';
+
 #======================================================================
 # main
 
@@ -24,6 +26,7 @@ autoflush STDERR;
 Getopt::Long::config ("no_auto_abbrev","require_order");
 if (! GetOptions (
 		  "help"	=> \&usage,
+		  "version"	=> sub { print "Version: $VERSION\n"; exit (1); },
 		  "cd=s"	=> \$Opt_Cd,
 		  "shell=s"	=> \$Opt_Shell,
 		  "show!"	=> \$opt_show,

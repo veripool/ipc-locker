@@ -32,6 +32,7 @@ Getopt::Long::config ("require_order");
 if (! GetOptions (
 		  "help"	=> \&usage,
 		  "debug"	=> \&debug,
+		  "version"	=> \&version,
 		  "dhost=s"	=> sub {shift; $server_params{host} = shift;},
 		  "lock=s"	=> sub {shift; push @{$server_params{lock}}, split(':',shift);},
 		  "port=i"	=> sub {shift; $server_params{port} = shift;},
@@ -115,6 +116,11 @@ print "Child exiting\n" if $Debug;
 sub usage {
     print "Version: $IPC::Locker::VERSION\n";
     pod2usage(-verbose=>2, -exitval => 2);
+    exit (1);
+}
+
+sub version {
+    print "Version: $IPC::Locker::VERSION\n";
     exit (1);
 }
 

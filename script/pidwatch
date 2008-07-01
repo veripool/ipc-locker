@@ -38,6 +38,7 @@ Getopt::Long::config ("require_order");
 if (! GetOptions (
 		  "help"	=> \&usage,
 		  "debug"	=> \&debug,
+		  "version"	=> \&version,
 		  "port=i"	=> sub {shift; $server_params{port} = shift;},
 		  #
 		  "host=s"	=> \$Opt_Host,
@@ -153,6 +154,11 @@ while (1) {
 sub usage {
     print "Version: $IPC::PidStat::VERSION\n";
     pod2usage(-verbose=>2, -exitval => 2);
+    exit (1);
+}
+
+sub version {
+    print "Version: $IPC::Locker::VERSION\n";
     exit (1);
 }
 
