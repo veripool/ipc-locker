@@ -137,11 +137,11 @@ while (1) {
 	&& $recved[0]==$Opt_Pid
 	&& $recved[1]==0) {   # It doesn't exist.  Oh my.
 	print $dbgfh "  Remote pid $Opt_Pid died\n" if $Debug;
+	$Opt_Signal =~ s/^-?(SIG)?//;
 	if ($Opt_Killer) {
-	    exec ($Opt_Killer, $Opt_Signal, $foreground_pid);
+	    exec ($Opt_Killer, "-".$Opt_Signal, $foreground_pid);
 	    exit(0);  # If exec fails...
 	} else {
-	    $Opt_Signal =~ s/^-?(SIG)?//;
 	    kill $Opt_Signal, $foreground_pid;
 	}
 	exit(0);
