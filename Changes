@@ -6,6 +6,8 @@ The contributors that suggested a given feature are shown in [].
 
 ****	Fix pidwatch --killer --signal to prepend dash.  [Bryce Denney]
 
+****	Fix locker ignoring remote PidWatch process death.
+
 * IPC::Locker 1.482 2008/07/01
 
 ***	Don't require pidstatd for pidwatch'es on localhost. [Bryce Denney]
