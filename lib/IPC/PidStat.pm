@@ -35,7 +35,7 @@ our @_Local_Responses;
 # Other configurable settings.
 $Debug = 0;
 
-$VERSION = '1.482';
+$VERSION = '1.483';
 
 # True if pid existance can be detected by looking at /proc filesystem
 $Stat_Of_Pid_Supported = -e "/proc/1";

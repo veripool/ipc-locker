@@ -2,7 +2,7 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
-* IPC::Locker 1.48*
+* IPC::Locker 1.483 2008/07/28
 
 ****	Fix pidwatch --killer --signal to prepend dash.  [Bryce Denney]
 
