@@ -9,41 +9,41 @@ use ExtUtils::MakeMaker;
 use Carp;
 
 sub MY::postamble {
-"
+    qq{
 README: readme.texi
-	-rm \$@
-	makeinfo \$< --output \$@ --no-headers --no-validate
+	-$(RM_RF) $@
+	makeinfo $< --output $@ --no-headers --no-validate
 
 install::
-	\@echo
-	\@echo '-NOTE: You may want to'
-	\@echo '-NOTE:      cp init.d/pidstatd init.d/lockerd  /etc/init.d'
-	\@echo '-NOTE: And setup appropriate links in /etc/rc.d/rc*.d,'
-	\@echo '-NOTE: and if using nagios,'
-	\@echo '-NOTE:      cp nagios/check_pidstatd nagios/check_lockerd  /usr/lib/nagios/plugins'
+	@echo
+	@echo '-NOTE: You may want to'
+	@echo '-NOTE:      cp init.d/pidstatd init.d/lockerd  /etc/init.d'
+	@echo '-NOTE: And setup appropriate links in /etc/rc.d/rc*.d,'
+	@echo '-NOTE: and if using nagios,'
+	@echo '-NOTE:      cp nagios/check_pidstatd nagios/check_lockerd  /usr/lib/nagios/plugins'
 
 install-here::
 	make install
 
 ## Maintainer use:
 preexist:
-	svnorcvs nexists \$(DISTNAME)_\$(VERSION_SYM)
+	svnorcvs nexists $(DISTNAME)_$(VERSION_SYM)
 	test -s README
 
 tag:
-	svnorcvs tag  \$(DISTNAME)_\$(VERSION_SYM)
+	svnorcvs tag  $(DISTNAME)_$(VERSION_SYM)
 
 maintainer-diff:
-	svnorcvs diff \$(DISTNAME)_\$(VERSION_SYM)
+	svnorcvs diff $(DISTNAME)_$(VERSION_SYM)
 
 maintainer-dist: preexist dist tag
-	svnorcvs release \$(DISTVNAME).tar.gz
+	svnorcvs release $(DISTVNAME).tar.gz
 
 maintainer-clean: distclean
-	-rm README Makefile
+	-$(RM_RF) README Makefile
 
 dist: distcheck
-";
+};
 }
 
 ## Remember to upgrade version number!
