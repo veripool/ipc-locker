@@ -24,9 +24,9 @@ This is the IPC::Locker Perl Package.
 @node Copyright, Description, Top, Top
 @section Copyright
 
-This package is Copyright 1999-2008 by Wilson Snyder @email{wsnyder@@wsnyder.org}.
+This package is Copyright 1999-2009 by Wilson Snyder @email{wsnyder@@wsnyder.org}.
 
-You may distribute under the terms of either the GNU General Public License
+You may distribute under the terms of either the GNU Lesser General Public License
 or the Perl Artistic License, as specified in the Perl README file.
 
 This code is provided with no warranty of any kind, and is used entirely at

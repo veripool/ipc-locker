@@ -1,15 +1,15 @@
 # DESCRIPTION: Perl ExtUtils: Type 'perl Makefile.PL' to create a Makefile for this package
 #
-# Copyright 1999-2008 by Wilson Snyder.  This program is free software;
+# Copyright 1999-2009 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
-# General Public License or the Perl Artistic License.
+# Lesser General Public License or the Perl Artistic License.
 
 require 5.005;
 use ExtUtils::MakeMaker;
 use Carp;
 
 sub MY::postamble {
-    qq{
+    q{
 README: readme.texi
 	-$(RM_RF) $@
 	makeinfo $< --output $@ --no-headers --no-validate
