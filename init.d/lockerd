@@ -4,7 +4,7 @@
 #
 # Copyright 1999-2009 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
-# Lesser General Public License or the Perl Artistic License.
+# Lesser General Public License Version 3 or the Perl Artistic License Version 2.0.
 #
 # chkconfig: 23456 99 10
 # description: Lockerd provides cross cluster lock services for IPC::Locker
