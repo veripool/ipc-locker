@@ -10,7 +10,7 @@ use Test;
 
 BEGIN { plan tests => 1 }
 
-if (!$ENV{VERILATOR_AUTHOR_SITE}) {
+if (!$ENV{IPCLOCKER_AUTHOR_SITE}) {
     skip("author only test (harmless)",1);
 } else {
     eval { use ExtUtils::Manifest; };
