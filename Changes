@@ -2,6 +2,10 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
+* IPC::Locker 1.48**
+
+****	Fix Pod::Usage dependency, rt51024.  [Andreas Koenig]
+
 * IPC::Locker 1.484 2009/05/08
 
 **	This package is now licensed under LGPL v3 and/or Artistic v2.0.

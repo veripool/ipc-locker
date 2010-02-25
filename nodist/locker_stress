@@ -4,7 +4,7 @@
 
 use lib './blib/lib';	# testing
 use lib '../blib/lib';	# testing
-use lib "$ENV{W}/hw/utils/perltools/Parallel-Forker/lib";
+use lib "$ENV{W}/$ENV{DIRPROJECT_PERLTOOLS}/Parallel-Forker/lib";
 
 require 5.006_001;
 
