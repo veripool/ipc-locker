@@ -298,20 +298,26 @@ sub client_close {
 
 sub client_status {
     # Send status of lock back to client
+    # Return 1 if success (client didn't hangup)
     my $clientvar = shift || die;
     $clientvar->{locked} = 0;
     $clientvar->{owner} = "";
     my $send = "";
     foreach my $lockname (@{$clientvar->{locks}}) {
 	if (my $locki = locki_find ($lockname)) {
-	    $clientvar->{locked} = ($locki->{owner} eq $clientvar->{user})?1:0;
-	    $clientvar->{owner} = $locki->{owner};
-	    $clientvar->{locks} = [$locki->{lock}] if $locki->{locked};
-	    if ($clientvar->{locked} && $clientvar->{told_locked}) {
-		$clientvar->{told_locked} = 0;
-		$send .= "print_obtained\n";
+	    if ($locki->{owner} eq $clientvar->{user}) {  # (Re) got lock
+		$clientvar->{locked} = 1;
+		$clientvar->{locks} = [$locki->{lock}];
+		$clientvar->{owner} = $locki->{owner};  # == Ourself
+		if ($clientvar->{told_locked}) {
+		    $clientvar->{told_locked} = 0;
+		    $send .= "print_obtained\n";
+		}
+		last;
+	    } else {
+		# Indicate first owner, for client "waiting" message 
+		$clientvar->{owner} = $locki->{owner} if !$clientvar->{owner};
 	    }
-	    last if $clientvar->{locked};
 	}
     }
 
@@ -351,12 +357,14 @@ sub client_lock {
 		# Older clients will ignore it.
 		client_send ($clientvar, "autounlock_check $locki->{lock} $locki->{hostname} $locki->{pid} 2\n");
 	    }
-	    # Try to have timer/exister clearup existing lock
+	    # Try to have timer/exister clear up existing lock
 	    locki_recheck($locki,undef); # locki maybe deleted
 	} else {
-	    # Know there's a free lock, munge request to point to only it
-	    $clientvar->{locks} = [$lockname];
-	    last;
+	    if (!$clientvar->{locked}) {  # Unlikely - some async path established the lock
+		# Know there's a free lock; for speed, munge request to point to only it
+		$clientvar->{locks} = [$lockname];
+		last;
+	    }
 	}
     }
 

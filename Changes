@@ -6,6 +6,8 @@ The contributors that suggested a given feature are shown in [].
 
 ***	Fix repeating locks to one client, bug237.  [by Krishna Subramanian]
 
+****	Fix "waiting" messages to show first lock name, not last.
+
 * IPC::Locker 1.485 2010/03/04
 
 ****	Fix Pod::Usage dependency, rt51024.  [Andreas Koenig]
