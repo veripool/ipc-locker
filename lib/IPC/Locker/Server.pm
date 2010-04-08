@@ -367,7 +367,7 @@ sub client_lock {
 	# Create new request.  If it can be serviced, this will
 	# establish the lock and send status back.
 	my $locki = locki_new_request($lockname, $clientvar);
-	$first_locki = $locki;
+	$first_locki ||= $locki;
 	# Done if found free lock
 	last if $clientvar->{locked};
     }

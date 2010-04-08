@@ -487,11 +487,11 @@ sub _request {
 	$self->{locked} = $args[0] if ($cmd eq "locked");
 	$self->{owner}  = $args[0] if ($cmd eq "owner");
 	$self->{error}  = $args[0] if ($cmd eq "error");
-	if ($cmd eq "lockname") {
+	if ($cmd eq "lockname") {  # LOCK request's reply
 	    $self->{lock}   = [$args[0]];
 	    $self->{lock}   = $self->{lock}[0] if ($#{$self->{lock}}<1);  # Back compatible
 	}
-	if ($cmd eq 'lock' && @args == 2) {
+	if ($cmd eq 'lock' && @args == 2) {  # LOCK_LIST request's reply
 	    push @{$self->{lock_list}}, @args;
 	}
 	if ($cmd eq "autounlock_check") {
