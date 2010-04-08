@@ -274,6 +274,7 @@ sub new {
 	($_ !~ /\s/) or carp "%Error: Lock names cannot contain whitespace: $_\n";
     }
     bless $self, $class;
+    print "Locker->new ",$self->lock_name_list,"\n" if $Debug;
     return $self;
 }
 
@@ -435,7 +436,7 @@ sub _request {
     $req.=    ("$cmd\n"
 	       ."\n"  # End of group.  Some day we may not always send EOF immediately
 	       ."EOF\n");
-    print "REQ ",join("\nR   ",split(/\n/,$req)),"\n" if $Debug;
+    print "Locker->REQ\nR   ",join("\nR   ",split(/\n/,$req)),"\n" if $Debug;
 
     my $fh;
     if ($self->{family} eq 'INET'){
@@ -444,7 +445,7 @@ sub _request {
 	@hostlist = @{$self->{host}} if (ref($self->{host}) eq "ARRAY");
 
 	foreach my $host (@hostlist) {
-	    print "Trying host $host\n" if $Debug;
+	    print "Locker->Trying host $host\n" if $Debug;
 	    $fh = IO::Socket::INET->new( Proto     => _tcp_proto(),
 					 PeerAddr  => $host,
 					 PeerPort  => $self->{port},
@@ -517,7 +518,7 @@ sub _request {
     }
     # Note above break_lock also has prologue close
     $fh->close();
-    print "DONE\n" if $Debug;
+    print "Locker->DONE\n" if $Debug;
 
     $@ = $preerror || $@;  # User's error is more important than any we make
 }
