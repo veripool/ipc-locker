@@ -274,7 +274,7 @@ sub new {
 	($_ !~ /\s/) or carp "%Error: Lock names cannot contain whitespace: $_\n";
     }
     bless $self, $class;
-    print "Locker->new ",$self->lock_name_list,"\n" if $Debug;
+    _timelog("Locker->new ",$self->lock_name_list,"\n") if $Debug;
     return $self;
 }
 
@@ -385,7 +385,7 @@ sub owner {
     $self = $self->new(@_) if (!ref($self));
     $self->_request ("STATUS");
     croak $self->{error} if $self->{error};
-    print "Locker->owner = $self->{owner}\n" if $Debug;
+    _timelog("Locker->owner = ",($self->{owner}||''),"\n") if $Debug;
     return $self->{owner};
 }
 
@@ -436,7 +436,7 @@ sub _request {
     $req.=    ("$cmd\n"
 	       ."\n"  # End of group.  Some day we may not always send EOF immediately
 	       ."EOF\n");
-    print "Locker->REQ\nR   ",join("\nR   ",split(/\n/,$req)),"\n" if $Debug;
+    _timelog("Locker->REQ\nR   ",join("\nR   ",split(/\n/,$req)),"\n") if $Debug;
 
     my $fh;
     if ($self->{family} eq 'INET'){
@@ -445,7 +445,7 @@ sub _request {
 	@hostlist = @{$self->{host}} if (ref($self->{host}) eq "ARRAY");
 
 	foreach my $host (@hostlist) {
-	    print "Locker->Trying host $host\n" if $Debug;
+	    _timelog("Locker->Trying host $host\n") if $Debug;
 	    $fh = IO::Socket::INET->new( Proto     => _tcp_proto(),
 					 PeerAddr  => $host,
 					 PeerPort  => $self->{port},
@@ -484,7 +484,7 @@ sub _request {
 	next if $line =~ /^\s*$/;
 	my @args = split /\s+/, $line;
 	my $cmd = shift @args;
-	print "RESP $line\n" if $Debug;
+	_timelog("RESP $line\n") if $Debug;
 	$self->{locked} = $args[0] if ($cmd eq "locked");
 	$self->{owner}  = $args[0] if ($cmd eq "owner");
 	$self->{error}  = $args[0] if ($cmd eq "error");
@@ -500,7 +500,7 @@ sub _request {
 	    my ($lname,$lhost,$lpid,$supports_dead) = @args;
 	    if ($self->{hostname} eq $lhost) {
 		if (IPC::PidStat::local_pid_doesnt_exist($lpid)) {
-		    print "Autounlock_LOCAL $lname $lhost $lpid $supports_dead\n" if $Debug;
+		    _timelog("Autounlock_LOCAL $lname $lhost $lpid $supports_dead\n") if $Debug;
 		    if ($supports_dead) {  # 1.480 server and newer
 			$self->dead_pid(host=>$lhost, pid=>$lpid);
 		    } else {  # This has a potential race case, which may kill the wrong lock
@@ -518,7 +518,7 @@ sub _request {
     }
     # Note above break_lock also has prologue close
     $fh->close();
-    print "Locker->DONE\n" if $Debug;
+    _timelog("Locker->DONE\n") if $Debug;
 
     $@ = $preerror || $@;  # User's error is more important than any we make
 }
@@ -550,6 +550,25 @@ sub colon_joined_list {
 sub lock_name_list {
     my $self = shift;
     return colon_joined_list($self->{lock});
+}
+
+######################################################################
+#### Logging
+
+sub _timelog {
+    my $msg = join('',@_);
+    my ($time, $time_usec) = Time::HiRes::gettimeofday();
+    my ($sec,$min,$hour,$mday,$mon) = localtime($time);
+    printf +("[%02d/%02d %02d:%02d:%02d.%06d] %s",
+	     $mon+1, $mday, $hour, $min, $sec, $time_usec, $msg);
+}
+
+sub _timelog_split {
+    my $first = shift;
+    my $prefix = shift;
+    my $text = shift;
+    my $msg = $first . join("\n$prefix", split(/\n+/, "\n$text")) . "\n";
+    _timelog($msg)
 }
 
 ######################################################################

@@ -182,6 +182,7 @@ sub start_server {
 		exist_traffic();
 	    } else {
 		my $data = '';
+		# For debug, change the 1000 to 1 below
 		my $rc = recv($fh, $data, 1000, 0);
 		if ($data eq '') {
 		    # we have finished with the socket
@@ -712,19 +713,10 @@ sub DESTROY {
 #### Logging
 
 sub _timelog {
-    my $msg = join('',@_);
-    my ($time, $time_usec) = Time::HiRes::gettimeofday();
-    my ($sec,$min,$hour,$mday,$mon) = localtime($time);
-    printf +("[%02d/%02d %02d:%02d:%02d.%06d] %s",
-	     $mon+1, $mday, $hour, $min, $sec, $time_usec, $msg);
+    IPC::Locker::_timelog(@_);
 }
-
 sub _timelog_split {
-    my $first = shift;
-    my $prefix = shift;
-    my $text = shift;
-    my $msg = $first . join("\n$prefix", split(/\n+/, "\n$text")) . "\n";
-    _timelog($msg)
+    IPC::Locker::_timelog_split(@_);
 }
 
 ######################################################################
