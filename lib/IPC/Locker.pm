@@ -416,7 +416,7 @@ sub _request {
     my $cmd = shift;
 
     # IO::Socket::INET nastily undef's $@.  Since this may get called
-    # in a destructor due to a error, that looses the error message.
+    # in a destructor due to an error, that looses the error message.
     # Workaround: save the error and restore at the end.
     my $preerror = $@;
 
@@ -439,7 +439,7 @@ sub _request {
     _timelog("Locker->REQ\nR   ",join("\nR   ",split(/\n/,$req)),"\n") if $Debug;
 
     my $fh;
-    if ($self->{family} eq 'INET'){
+    if ($self->{family} eq 'INET') {
 	my @hostlist = ($self->{host});
 	@hostlist = split (':', $self->{host}) if (!ref($self->{host}));
 	@hostlist = @{$self->{host}} if (ref($self->{host}) eq "ARRAY");
