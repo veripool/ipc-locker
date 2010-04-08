@@ -231,7 +231,7 @@ sub client_service {
 
     # We may return before processing all lines, thus the lines are
     # stored in the client variables
-    foreach my $line (@{$linesref}) {
+    while (defined (my $line = shift @{$linesref})) {
 	_timelog("c$clientvar->{client_num}: REQ $line\n") if $Debug;
 	my ($cmd,@param) = split /\s+/, $line;  # We rely on the newline to terminate the split
 	if ($cmd) {

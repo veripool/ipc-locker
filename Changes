@@ -2,6 +2,10 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
+* IPC::Locker 1.49****
+
+***	Fix repeating locks to one client, bug237.  [by Krishna Subramanian]
+
 * IPC::Locker 1.485 2010/03/04
 
 ****	Fix Pod::Usage dependency, rt51024.  [Andreas Koenig]
