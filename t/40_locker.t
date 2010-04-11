@@ -31,7 +31,8 @@ print "IPC::Locker VERSION $IPC::Locker::VERSION\n";
 
 use IPC::Locker::Server;
 %SLArgs = (port=>socket_find_free(12345),
-	   host=>'localhost');
+	   host=>'localhost',
+	   connect_sleep => 3, );
 
 if ($Serv_Pid = fork()) {
 } else {
@@ -114,9 +115,7 @@ ok (!$lock->locked());
 ok ($lock->ping());
 
 # Ping unknown host
-ok (!(IPC::Locker->ping(host=>['no_such_host_as_this'],
-			timeout=>1,
-			)));
+ok (!(IPC::Locker->ping(host=>['no_such_host_as_this'])));
 
 # Destructor
 undef $lock;

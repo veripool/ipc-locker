@@ -58,12 +58,15 @@ is destroyed.
 
 =item ping ()
 
-Polls the server to see if it is up.  Returns true if up, otherwise undef.
+A simplified version of ping_status; polls the server to see if it is up.
+Returns true if up, otherwise undef.
 
 =item ping_status ()
 
 Polls the server to see if it is up.  Returns hash reference with {ok}
-indicating if up, and {status} with status information.
+indicating if up, and {status} with status information.  If called without
+an object, defaults to call new() with connect_tries=>1, under the
+assumption that a quick go/nogo response is desired.
 
 =item break_lock ()
 
@@ -85,8 +88,19 @@ obtain the lock and then release it if you got it.
 =item block
 
 Boolean flag, true indicates wait for the lock when calling lock() and die
-if a error occurs.  False indicates to just return false.  Defaults to
+if an error occurs.  False indicates to just return false.  Defaults to
 true.
+
+=item connect_tries
+
+If none of the lockerd hosts are available or other network errors are
+encountered, perform this number of retries, with a random connect_delay to
+connect_delay*2 interval between them before signalling an error.
+
+=item connect_delay
+
+The minimum seconds to wait between each of the connect_tries, and
+one-half of the maximum random wait.  Defaults to 30 seconds.
 
 =item destroy_unlock
 
@@ -102,9 +116,9 @@ The family of transport to use, either INET or UNIX.  Defaults to INET.
 
 =item host
 
-The name of the host containing the lock server.  It may also be a array
-of hostnames, where if the first one is down, subsequent ones will be tried.
-Defaults to value of IPCLOCKER_HOST or localhost.
+The name of the host containing the lock server.  It may also be an array
+of hostnames, where if the first one is down, subsequent ones will be
+tried.  Defaults to value of IPCLOCKER_HOST or localhost.
 
 =item port
 
@@ -131,21 +145,27 @@ The process ID that owns the lock, defaults to the current process id.
 A function to print a message when the lock is broken.  The only argument
 is self.  Defaults to print a message if verbose is set.
 
+=item print_down
+
+A function to print a message when the lock server is unavailable.  The
+first argument is self.  Defaults to a croak message.
+
 =item print_obtained
 
 A function to print a message when the lock is obtained after a delay.  The
 only argument is self.  Defaults to print a message if verbose is set.
+
+=item print_retry
+
+A function to print a message when the lock server is unavailable, and is
+about to be retried.  The first argument is self.  Defaults to a print
+message.
 
 =item print_waiting
 
 A function to print a message when the lock is busy and needs to be waited
 for.  The first argument is self, second the name of the lock.  Defaults to
 print a message if verbose is set.
-
-=item print_down
-
-A function to print a message when the lock server is unavailable.  The
-first argument is self.  Defaults to a croak message.
 
 =item timeout
 
@@ -261,9 +281,12 @@ sub new {
 	autounlock=>0,
 	destroy_unlock=>1,
 	verbose=>$Debug,
+	connect_tries=>3,
+	connect_delay=>30,
 	print_broke=>sub {my $self=shift; print "Broke lock from $_[0] at ".(scalar(localtime))."\n" if $self->{verbose};},
 	print_obtained=>sub {my $self=shift; print "Obtained lock at ".(scalar(localtime))."\n" if $self->{verbose};},
 	print_waiting=>sub {my $self=shift; print "Waiting for lock from $_[0] at ".(scalar(localtime))."\n" if $self->{verbose};},
+	print_retry=>sub {my ($self,$sleep)=@_; print "Unable to connect to server, retrying connection in ${sleep} sec at ".(scalar(localtime))."\n" if $self->{verbose};},
 	print_down=>undef,
 	family=>$Default_Family,
 	#Internal
@@ -296,20 +319,18 @@ sub locked () {
 
 sub ping {
     my $self = shift;
-    $self = $self->new(@_) if (!ref($self));
-    my $ok = 0;
-    eval {
-	$self->_request("");
-	$ok = 1;
-    };
-    return undef if !$ok;
-    return ($self);
+    my $res = $self->ping_status(@_);
+    if ($res->{ok}) {
+	return $self;
+    } else {
+	return undef;
+    }
 }
 
 sub ping_status {
     my $self = shift;
     # Return OK and status message, for nagios like checks
-    $self = $self->new(@_) if (!ref($self));
+    $self = $self->new(connect_tries=>1, @_) if (!ref($self));
     my $ok = 0;
     my $start_time = [gettimeofday()];
     eval {
@@ -415,6 +436,55 @@ sub _request {
     my $self = shift;
     my $cmd = shift;
 
+    my @hostlist = ('localhost');
+    if ($self->{family} eq 'INET') {
+	@hostlist = ($self->{host});
+	@hostlist = split (':', $self->{host}) if (!ref($self->{host}));
+	@hostlist = @{$self->{host}} if (ref($self->{host}) eq "ARRAY");
+    }
+
+    my $ok;
+  try:
+    for (my $tries = 0; $tries < ($self->{connect_tries}||1); $tries++) {
+	if ($tries > 0) {
+	    my $sleep = $self->{connect_delay} + int(rand($self->{connect_delay}));
+	    _timelog("Locker->connect_delay $sleep sec\n") if $Debug;
+	    &{$self->{print_retry}} ($self, $sleep);
+	    sleep($sleep);
+	}
+	foreach my $host (@hostlist) {
+	    $ok = $self->_request_attempt($cmd,$host);
+	    if ($ok) {
+		if ($host ne $hostlist[0]) {
+		    # Reorganize host list so whoever responded is first
+		    # This is so if we grab a lock we'll try to return it to the same host
+		    $self->{host} = [$host, grep( ($_ ne $host), @hostlist)];
+		}
+		last try;
+	    }
+	}
+    }
+
+    if (!$ok) {
+	if (defined $self->{print_down}) {
+	    &{$self->{print_down}} ($self);
+	    return;
+	}
+	croak "%Error: Can't locate lock server on "
+	    . (($self->{family} eq 'INET') ? (join " or ", @hostlist) : "UNIX port")
+	    ." $self->{port}\n"
+	    . "\tYou probably need to run lockerd\n$self->_request(): Stopped";
+    }
+
+    _timelog("Locker->DONE\n") if $Debug;
+}
+
+sub _request_attempt {
+    my $self = shift;
+    my $cmd = shift;
+    my $host = shift;
+    # Return true if request was successful
+
     # IO::Socket::INET nastily undef's $@.  Since this may get called
     # in a destructor due to an error, that looses the error message.
     # Workaround: save the error and restore at the end.
@@ -440,41 +510,18 @@ sub _request {
 
     my $fh;
     if ($self->{family} eq 'INET') {
-	my @hostlist = ($self->{host});
-	@hostlist = split (':', $self->{host}) if (!ref($self->{host}));
-	@hostlist = @{$self->{host}} if (ref($self->{host}) eq "ARRAY");
-
-	foreach my $host (@hostlist) {
-	    _timelog("Locker->Trying host $host\n") if $Debug;
-	    $fh = IO::Socket::INET->new( Proto     => _tcp_proto(),
-					 PeerAddr  => $host,
-					 PeerPort  => $self->{port},
-					 );
-	    if ($fh) {
-		if ($host ne $hostlist[0]) {
-		    # Reorganize host list so whoever responded is first
-		    # This is so if we grab a lock we'll try to return it to the same host
-		    $self->{host} = [$host, @hostlist];
-		}
-		last;
-	    }
-	}
-	if (!$fh) {
-	    if (defined $self->{print_down}) {
-		&{$self->{print_down}} ($self);
-		return;
-	    }
-	    croak "%Error: Can't locate lock server on " . (join " or ", @hostlist), " $self->{port}\n"
-		. "\tYou probably need to run lockerd\n$self->_request(): Stopped";
-	}
+	_timelog("Locker->Trying host $host\n") if $Debug;
+	$fh = IO::Socket::INET->new( Proto     => _tcp_proto(),
+				     PeerAddr  => $host,
+				     PeerPort  => $self->{port}, );
     } elsif ($self->{family} eq 'UNIX') {
-	$fh = IO::Socket::UNIX->new( Peer => $self->{port},
-				     )
-	    or croak "%Error: Can't locate lock server on $self->{port}.\n"
-		. "\tYou probably need to run lockerd\n$self->_request(): Stopped";
+	_timelog("Locker->Trying UNIX socket\n") if $Debug;
+	$fh = IO::Socket::UNIX->new( Peer => $self->{port}, );
     } else {
 	croak "IPC::Locker->_request(): No or wrong transport specified.";
     }
+
+    return undef if !$fh;
 
     $self->{lock_list} = [];
 
@@ -518,9 +565,9 @@ sub _request {
     }
     # Note above break_lock also has prologue close
     $fh->close();
-    _timelog("Locker->DONE\n") if $Debug;
 
     $@ = $preerror || $@;  # User's error is more important than any we make
+    return 1;
 }
 
 ######################################################################
