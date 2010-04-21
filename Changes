@@ -2,7 +2,7 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
-* IPC::Locker 1.48****
+* IPC::Locker 1.486 2010/04/20
 
 **	Add 3 automatic retries on connection failures.  [Krishna Subramanian]
 	Override using IPC::Locker->new()'s connect_tries and connect_sleep.
