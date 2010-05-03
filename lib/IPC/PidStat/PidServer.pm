@@ -101,7 +101,10 @@ IPC::PidStat::PidServer - Process ID existence server
 
   use IPC::PidStat::PidServer;
 
-  IPC::PidStat::PidServer->start_server(port=>1234,);
+  IPC::PidStat::PidServer->new(port=>1234)->start_server;
+
+  # Or more typically via the command line
+  pidstatd
 
 =head1 DESCRIPTION
 
@@ -112,6 +115,10 @@ The Perl IPC::Locker package optionally uses this daemon to break locks
 for PIDs that no longer exists.
 
 =over 4
+
+=item new ([parameter=>value ...]);
+
+Creates a server object.
 
 =item start_server ([parameter=>value ...]);
 

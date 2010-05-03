@@ -9,13 +9,20 @@ IPC::Locker::Server - Distributed lock handler server
 
   use IPC::Locker::Server;
 
-  IPC::Locker::Server->start_server(port=>1234,);
+  IPC::Locker::Server->new(port=>1234)->start_server;
+
+  # Or more typically via the command line
+  lockerd
 
 =head1 DESCRIPTION
 
 L<IPC::Locker::Server> provides the server for the IPC::Locker package.
 
 =over 4
+
+=item new ([parameter=>value ...]);
+
+Creates a server object.
 
 =item start_server ([parameter=>value ...]);
 

@@ -2,6 +2,10 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
+* IPC::Locker 1.486 2010/***
+
+****	Fix documentation on ::Server, bug252.  [Dennis McCoy]
+
 * IPC::Locker 1.486 2010/04/20
 
 **	Add 3 automatic retries on connection failures.  [Krishna Subramanian]
