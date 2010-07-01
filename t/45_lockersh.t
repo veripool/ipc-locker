@@ -8,7 +8,7 @@
 # Lesser General Public License Version 3 or the Perl Artistic License Version 2.0.
 
 use lib "./blib/lib";
-use Test;
+use Test::More;
 use strict;
 use vars qw (%SLArgs $Serv_Pid);
 
@@ -28,19 +28,21 @@ if ($Serv_Pid = fork()) {
     IPC::Locker::Server->new(%SLArgs)->start_server ();
     exit(0);
 }
-ok (1);
+ok (1, "fork");
 sleep(1); #Let server get established
 
 #########################
 # Test lockersh
 
 {   print "lockersh:\n";
-    my $rtn = run_rtn("$PERL script/lockersh --dhost localhost --port $SLArgs{port} --lock lockersh_test echo OK");
-    ok($rtn eq "OK");
+    my $cmd = "$PERL script/lockersh --dhost localhost --port $SLArgs{port} --lock lockersh_test echo OK";
+    my $rtn = run_rtn($cmd);
+    is($rtn, "OK", "lockersh result for: $cmd");
 }
 
 {   print "lockersh --locklist:\n";
-    my $rtn = run_rtn("$PERL script/lockersh --dhost localhost --port $SLArgs{port} --locklist");
-    ok(1);
+    my $cmd = "$PERL script/lockersh --dhost localhost --port $SLArgs{port} --locklist";
+    my $rtn = run_rtn($cmd);
+    ok(1, "locklist result for: $cmd");
 }
 

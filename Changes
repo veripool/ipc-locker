@@ -2,9 +2,11 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
-* IPC::Locker 1.486 2010/***
+* IPC::Locker 1.487 2010/07/01
 
 ****	Fix documentation on ::Server, bug252.  [Dennis McCoy]
+
+****	Use Test::More to simplify test failure debugging.
 
 * IPC::Locker 1.486 2010/04/20
 

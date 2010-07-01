@@ -13,6 +13,7 @@ resources:
 requires:
     Net::Domain:                   0
     Pod::Usage:                    1.34
+    Test::More:                    0
     Time::HiRes:                   0
 
 meta-spec:

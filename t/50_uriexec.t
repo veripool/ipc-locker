@@ -7,7 +7,7 @@
 # you can redistribute it and/or modify it under the terms of either the GNU
 # Lesser General Public License Version 3 or the Perl Artistic License Version 2.0.
 
-use Test;
+use Test::More;
 use strict;
 
 BEGIN { plan tests => 2 }
@@ -16,7 +16,6 @@ BEGIN { require "t/test_utils.pl"; }
 #########################
 
 my $cmd = `$PERL script/uriexec echo %27Hello+%57orld%21%27`;
-print "Got $cmd\n";
-ok(1);
-ok($cmd =~ /Hello World!/);
+ok(1, "uriexec ran");
+like($cmd, qr/Hello World!/, "uriexec result for: $cmd");
 

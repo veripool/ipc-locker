@@ -8,7 +8,7 @@
 # Lesser General Public License Version 3 or the Perl Artistic License Version 2.0.
 
 use lib "./blib/lib";
-use Test;
+use Test::More;
 use Sys::Hostname;
 use strict;
 use vars qw (%SLArgs $Serv_Pid);
@@ -28,8 +28,8 @@ print "IPC::PidStat VERSION $IPC::PidStat::VERSION\n";
 
 #########################
 # Static checks
-ok (IPC::PidStat::local_pid_exists($$));
-ok (!IPC::PidStat::local_pid_doesnt_exist($$));
+ok (IPC::PidStat::local_pid_exists($$), 'local_pid_exists');
+ok (!IPC::PidStat::local_pid_doesnt_exist($$), 'local_pid_doesnt_exist');
 
 #########################
 # Server Constructor
@@ -42,7 +42,7 @@ if ($Serv_Pid = fork()) {
     IPC::PidStat::PidServer->new(%SLArgs)->start_server ();
     exit(0);
 }
-ok (1);
+ok (1, 'forked');
 sleep(1); #Let server get established
 
 #########################
@@ -51,7 +51,7 @@ sleep(1); #Let server get established
 my $exister = new IPC::PidStat
     (%SLArgs,
      );
-ok ($exister);
+ok ($exister, 'new');
 
 # Send request and check return
 # These will (probably) use the local path, not the daemon
@@ -74,26 +74,29 @@ ok (check_stat($exister, hostname(), $$));
 
 # Destructor
 undef $exister;
-ok (1);
+ok (1, 'destroy');
 
 #########################
 # pidwatch
 
 # We use init's pid (1), which had better be running :)
 {   print "pidwatch ok:\n";
-    my $rtn = run_rtn("$PERL script/pidwatch --port $SLArgs{port} --pid 1 echo hello");
-    ok(1);
-    ok($rtn eq "hello");
+    my $cmd = "$PERL script/pidwatch --port $SLArgs{port} --pid 1 echo hello";
+    my $rtn = run_rtn($cmd);
+    ok($rtn);
+    is($rtn, "hello", "pidwatch result for: $cmd");
 }
 
 {   print "pidwatch fail:\n";
     my $nonexist_pid = 999999;  # not even legal
-    my $rtn = run_rtn("$PERL script/pidwatch --port $SLArgs{port} --pid $nonexist_pid \"sleep 1 ; echo never_executed\"");
-    ok($rtn eq "");
+    my $cmd = "$PERL script/pidwatch --port $SLArgs{port} --pid $nonexist_pid \"sleep 1 ; echo never_executed\"";
+    my $rtn = run_rtn($cmd);
+    is($rtn, "", "pidwatch result for: $cmd");
 }
 
 {   print "pidwatch immediate exit:\n";
-    my $rtn = run_rtn("$PERL script/pidwatch --port $SLArgs{port} --pid 1 --foreground $$");
+    my $cmd = "$PERL script/pidwatch --port $SLArgs{port} --pid 1 --foreground $$";
+    my $rtn = run_rtn($cmd);
     ok(1);
 }
 
@@ -101,12 +104,14 @@ ok (1);
 # Nagios script check
 
 print "check_pidstat:\n";
-if (!-d "/usr/lib/nagios/plugins") {
-    skip("nagios not installed (harmless)",1);
-} else {
+SKIP: {
+    if (!-d "/usr/lib/nagios/plugins") {
+	skip("nagios not installed (harmless)",1);
+    }
     # Note we may not be running as root, so need to check $$, not init.
-    my $rtn = run_rtn("$PERL nagios/check_pidstatd --port $SLArgs{port} --pid $$");
-    ok($rtn =~ /OK/);
+    my $cmd = "$PERL nagios/check_pidstatd --port $SLArgs{port} --pid $$";
+    my $rtn = run_rtn($cmd);
+    like($rtn, qr/OK/, "nagios result for: $cmd");
 }
 
 ######################################################################
