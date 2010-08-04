@@ -2,6 +2,10 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
+* IPC::Locker 1.488 2010/08/04
+
+****	Fix some false CPAN test failures with pidstat on slow systems.
+
 * IPC::Locker 1.487 2010/07/01
 
 ****	Fix documentation on ::Server, bug252.  [Dennis McCoy]
