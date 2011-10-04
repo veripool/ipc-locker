@@ -88,7 +88,7 @@ sub sig_HUP {
 
 sub usage {
     print "Version: $IPC::PidStat::VERSION\n";
-    pod2usage(-verbose=>2, -exitval => 2);
+    pod2usage(-verbose=>2, -exitval=>2, -output=>\*STDOUT);
     exit(1);
 }
 
