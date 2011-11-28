@@ -134,6 +134,10 @@ in user debug.  This also supports decoding nested uriexec calls, however
 they are not always perfect so the output from this option is only for
 users, not scripts.
 
+=item --version
+
+Displays program version and exits.
+
 =back
 
 =head1 DISTRIBUTION

@@ -266,6 +266,10 @@ Port of L<pidstatd> server on remote host.
 Signal number/name to send to process on remote PIDs death.  Defaults to
 -HUP.
 
+=item --version
+
+Displays program version and exits.
+
 =back
 
 =head1 DISTRIBUTION

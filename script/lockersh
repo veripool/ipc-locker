@@ -210,6 +210,10 @@ to wait forever.
 
 Print 'waiting for lock' and similar messages.
 
+=item --version
+
+Displays program version and exits.
+
 =back
 
 =head1 ENVIRONMENT
