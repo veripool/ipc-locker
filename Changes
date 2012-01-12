@@ -2,7 +2,7 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
-* IPC::Locker 1.489****
+* IPC::Locker 1.489 2012/01/12
 
 ****	Fix some false CPAN test failures.
 
@@ -228,7 +228,7 @@ DESCRIPTION: Documentation on change history for this package
 
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
-Copyright 1999-2010 by Wilson Snyder.  This program is free software;
+Copyright 1999-2012 by Wilson Snyder.  This program is free software;
 you can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License Version 3 or the Perl Artistic License Version 2.0.
 
