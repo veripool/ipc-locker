@@ -61,7 +61,7 @@ timelog("End\n") if $Debug;
 #----------------------------------------------------------------------
 
 sub usage {
-    pod2usage(-verbose=>2, -exitval=>2, -output=>\*STDOUT);
+    pod2usage(-verbose=>2, -exitval=>2, -output=>\*STDOUT, -output=>\*STDOUT);
     exit (1);
 }
 
