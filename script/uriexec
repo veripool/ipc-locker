@@ -64,7 +64,7 @@ die "%Error: uriexec: exec failed: '".join(' ',@cmds),"\n";
 sub usage {
     eval 'use Pod::Usage;';
     print "Version: $VERSION\n";
-    pod2usage(-verbose=>2, -exitval=>2, -output=>\*STDOUT, -output=>\*STDOUT);
+    pod2usage(-verbose=>2, -exitval=>2, -output=>\*STDOUT, -noperldoc=>1);
     exit (1);
 }
 
