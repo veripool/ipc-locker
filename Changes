@@ -2,7 +2,7 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
-* IPC::Locker 1.450 2012/03/16
+* IPC::Locker 1.491 2012/03/16
 
 ****	Fix cpan-testers' tests on systems without perldoc.
 

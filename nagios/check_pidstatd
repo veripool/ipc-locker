@@ -13,7 +13,7 @@ use lib "/usr/lib/nagios/plugins" ;
 use utils qw(%ERRORS &print_revision &support &usage);
 use IPC::PidStat;
 
-$VERSION = '1.490';
+$VERSION = '1.491';
 
 #======================================================================
 # main

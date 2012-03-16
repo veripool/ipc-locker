@@ -11,3 +11,4 @@ pm_to_blib$
 \.svn/
 nodist/
 test_dir
+^(.*/)?MYMETA\..*$
