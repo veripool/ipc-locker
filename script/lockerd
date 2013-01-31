@@ -30,6 +30,7 @@ if (!GetOptions (
 		 "help"		=> \&usage,
 		 "debug"	=> \&debug,
 		 "version"	=> \&version,
+		 "host=s"	=> sub {$server_params{host} = $_[1];},
 		 "port=i"	=> sub {$server_params{port} = $_[1];},
 		 "path=s"	=> sub {$server_params{port} = $_[1];
 					$server_params{family}='UNIX';},
@@ -98,6 +99,7 @@ lockerd - Distributed lock handler for Perl IPC::Locker
 B<lockerd>
 [ B<--help> ]
 [ B<--port=>I<port> ]
+[ B<--host=>I<host> ]
 [ B<--path=>I<fifo_path> ]
 [ B<--version> ]
 
@@ -118,9 +120,13 @@ Displays this message and program version and exits.
 
 Keep the daemon in the foreground for debugging.
 
+=item --host
+
+Specifies the IP address to be used for the daemon. Defaults to localhost.
+
 =item --port
 
-Specifies the port number to be used.
+Specifies the port number to be used for the daemon.
 
 =item --path
 

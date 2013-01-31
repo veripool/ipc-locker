@@ -2,6 +2,11 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
+* IPC::Locker 1.49*
+
+***     Add --host option to lockerd.  [Victor Gamov]
+
+
 * IPC::Locker 1.491 2012/03/16
 
 ****	Fix cpan-testers' tests on systems without perldoc.

@@ -115,6 +115,7 @@ sub new {
 	#Documented
 	port=>$IPC::Locker::Default_Port,
 	family=>$IPC::Locker::Default_Family,
+	host=>'localhost',
 	@_,};
     bless $self, $class;
     my $param = {@_};
@@ -133,6 +134,7 @@ sub start_server {
     my $server;
     if ($self->{family} eq 'INET') {
 	$server = IO::Socket::INET->new( Proto     => 'tcp',
+					 LocalAddr => $self->{host},
 					 LocalPort => $self->{port},
 					 Listen    => SOMAXCONN,
 					 Reuse     => 1)
