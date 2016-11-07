@@ -10,7 +10,7 @@ use Cwd qw();
 use strict;
 use vars qw(@CmdParts $VERSION);
 
-$VERSION = '1.492';
+$VERSION = '1.493';
 
 #======================================================================
 # main
