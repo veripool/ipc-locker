@@ -510,7 +510,7 @@ sub _request_attempt {
 
     my $fh;
     if ($self->{family} eq 'INET') {
-	_timelog("Locker->Trying host $host\n") if $Debug;
+	_timelog("Locker->Trying host $host $self->{port}\n") if $Debug;
 	$fh = IO::Socket::INET->new( Proto     => _tcp_proto(),
 				     PeerAddr  => $host,
 				     PeerPort  => $self->{port}, );

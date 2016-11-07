@@ -196,7 +196,7 @@ Stephen Adkins <stephen.adkins@officevision.com>
 
 =head1 SEE ALSO
 
-L<IPC::Locker>, L<IPC::PidStat>, L<pidstatd>, L<pidwatch>
+L<IPC::Locker>, L<IPC::PidStat>, L<pidstatd>, L<pidwatch>, L<uriexec>
 
 =cut
 ######################################################################
