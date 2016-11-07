@@ -160,8 +160,9 @@ sub start_server {
     $SIG{INT}= \&sig_INT;
     $SIG{HUP}= \&sig_INT;
 
+    $! = 0;
     while (!$Interrupts) {
-	_timelog("Pre-Poll $!\n") if $Debug;
+	_timelog("Pre-poll $!\n") if $Debug;
 	#use Data::Dumper; Carp::cluck(Dumper(\%Clients, \%Locks));
 	$! = 0;
 	my (@r, @w, @e);
