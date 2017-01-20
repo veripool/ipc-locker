@@ -2,6 +2,11 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
+
+* IPC::Locker 1.495 devel
+
+
+
 * IPC::Locker 1.494 2017-01-20
 
 ***     Fix debug message.
