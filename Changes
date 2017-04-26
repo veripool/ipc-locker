@@ -5,6 +5,7 @@ The contributors that suggested a given feature are shown in [].
 
 * IPC::Locker 1.495 devel
 
+****	Fix tests '.' for Perl 5.26.0, rt121025.  [Dan Collins]
 
 
 * IPC::Locker 1.494 2017-01-20

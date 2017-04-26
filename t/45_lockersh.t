@@ -13,7 +13,7 @@ use strict;
 use vars qw (%SLArgs $Serv_Pid);
 
 BEGIN { plan tests => 3 }
-BEGIN { require "t/test_utils.pl"; }
+BEGIN { require "./t/test_utils.pl"; }
 
 END { kill 'TERM', $Serv_Pid; }
 
