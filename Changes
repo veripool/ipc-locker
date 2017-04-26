@@ -3,7 +3,7 @@ Revision history for Perl extension IPC::Locker
 The contributors that suggested a given feature are shown in [].
 
 
-* IPC::Locker 1.495 devel
+* IPC::Locker 1.496 2017-04-26
 
 ****	Fix tests '.' for Perl 5.26.0, rt121025.  [Dan Collins]
 

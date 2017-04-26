@@ -249,7 +249,7 @@ use Carp;
 # Other configurable settings.
 $Debug = 0;
 
-$VERSION = '1.495';
+$VERSION = '1.496';
 
 ######################################################################
 #### Useful Globals
