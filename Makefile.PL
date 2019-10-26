@@ -10,10 +10,6 @@ use Carp;
 
 sub MY::postamble {
     q{
-README: readme.texi
-	-$(RM_RF) $@
-	makeinfo $< --output $@ --no-headers --no-validate
-
 install::
 	@echo
 	@echo '-NOTE: You may want to'
@@ -28,7 +24,6 @@ install-here::
 ## Maintainer use:
 preexist:
 	svnorcvs nexists $(DISTNAME)_$(VERSION_SYM)
-	test -s README
 
 tag:
 	svnorcvs tag  $(DISTNAME)_$(VERSION_SYM)
@@ -65,7 +60,7 @@ WriteMakefile(
 				script/uriexec )],
 	      'dist'    => {COMPRESS => 'gzip -9f',
 			    SUFFIX   => '.gz',
-			    DIST_DEFAULT => 'README all tardist',
+			    DIST_DEFAULT => 'all tardist',
 			},
 	      );
 

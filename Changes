@@ -2,6 +2,10 @@ Revision history for Perl extension IPC::Locker
 
 The contributors that suggested a given feature are shown in [].
 
+* IPC::Locker 1.500 devel
+
+****  Documentation cleanups for github release.
+
 
 * IPC::Locker 1.496 2017-04-26
 
@@ -35,7 +39,7 @@ The contributors that suggested a given feature are shown in [].
 
 * IPC::Locker 1.487 2010-07-01
 
-****	Fix documentation on ::Server, bug252.  [Dennis McCoy]
+****	Fix documentation on ::Server, issue5.  [Dennis McCoy]
 
 ****	Use Test::More to simplify test failure debugging.
 
@@ -45,7 +49,7 @@ The contributors that suggested a given feature are shown in [].
 **	Add 3 automatic retries on connection failures.  [Krishna Subramanian]
 	Override using IPC::Locker->new()'s connect_tries and connect_sleep.
 
-***	Fix repeating locks to one client, bug237.  [by Krishna Subramanian]
+***	Fix repeating locks to one client, issue4.  [by Krishna Subramanian]
 
 ****	Fix "waiting" messages to show first lock name, not last.
 
